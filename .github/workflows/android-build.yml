@@ -24,6 +24,12 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
+      # --- NEW STEP: MOVES HTML TO 'www' FOLDER ---
+      - name: Prepare Web Assets
+        run: |
+          mkdir www
+          mv index.html www/
+
       - name: Add Android Platform
         run: npx cap add android
 
