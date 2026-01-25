@@ -368,75 +368,100 @@ function createFormFields(){
   createSubmitButton(); setupFormSubmission();
 }
 
-function createSearchableDropdown(container,header,columnIndex){
-  const wrapper=document.createElement('div');
-  wrapper.className='searchable-dropdown-wrapper';
-  if(!limitedCSVData||limitedCSVData.length===0){
-    const errorMsg=document.createElement('p');
-    errorMsg.textContent='Data not loaded yet'; errorMsg.style.color='red';
-    container.appendChild(errorMsg); return;
-  }
-  const searchInput=document.createElement('input');
-  searchInput.type='text'; searchInput.className='search-input'; searchInput.id=`search-${columnIndex}`;
-  const select=document.createElement('select');
-  select.name=header; select.id=`dropdown-${columnIndex}`; select.required=mandatoryIndices.includes(columnIndex); select.style.display='none';
-  if(columnIndex===1){
-    searchInput.placeholder = "Select AC No...";
-    const def = document.createElement('option'); 
-    def.value = ""; 
-    def.textContent = "-- Select AC No --"; 
-    select.appendChild(def);
-    const start = 206;
-    const end = 216;
-    for(let i = start; i <= end; i++) {
-        const val = i.toString();
-        const opt = document.createElement('option');
-        opt.value = val;
-        opt.textContent = val;
-        select.appendChild(opt);
-        const item = document.createElement('div');
-        item.className = 'dropdown-item';
-        item.textContent = val;
-        item.onclick = () => {
-            select.value = val;
-            searchInput.value = val;
-            dropdownList.style.display = 'none';
-            updateNextDropdowns(columnIndex);
-        };
-        dropdownList.appendChild(item);
-    }
-    searchInput.readOnly = false;
-    searchInput.style.backgroundColor = 'white';
+function createSearchableDropdown(container, header, columnIndex) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'searchable-dropdown-wrapper';
+
+  // Error check
+  if (!limitedCSVData || limitedCSVData.length === 0) {
+    const errorMsg = document.createElement('p');
+    errorMsg.textContent = 'Data not loaded yet';
+    errorMsg.style.color = 'red';
+    container.appendChild(errorMsg);
+    return;
+  }
+
+  // 1. Create Input and Hidden Select
+  const searchInput = document.createElement('input');
+  searchInput.type = 'text';
+  searchInput.className = 'search-input';
+  searchInput.id = `search-${columnIndex}`;
+  searchInput.placeholder = `Search ${header}...`;
+
+  const select = document.createElement('select');
+  select.name = header;
+  select.id = `dropdown-${columnIndex}`;
+  select.required = mandatoryIndices.includes(columnIndex);
+  select.style.display = 'none';
+
+  // 2. Create Dropdown List Container (Defined BEFORE use to prevent crash)
+  const dropdownList = document.createElement('div');
+  dropdownList.className = 'dropdown-list';
+  dropdownList.style.display = 'none';
+
+  // 3. Add Default Option
+  const def = document.createElement('option');
+  def.value = "";
+  def.textContent = `-- Select ${header} --`;
+  select.appendChild(def);
+
+  // 4. Get Unique Values from CSV (Dynamic Logic for ALL columns, including Index 1)
+  const uniqueValues = [...new Set(limitedCSVData.map(row => row[columnIndex]))]
+    .filter(v => v) // Remove empty values
+    .sort((a, b) => {
+      // Numerical sort if possible, otherwise alphabetical
+      const numA = parseInt(a);
+      const numB = parseInt(b);
+      if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+      return a.localeCompare(b);
+    });
+
+  // 5. Populate Options
+  uniqueValues.forEach(value => {
+    // Add to Hidden Select
+    const opt = document.createElement('option');
+    opt.value = value;
+    opt.textContent = value;
+    select.appendChild(opt);
+
+    // Add to Visual Dropdown List
+    const item = document.createElement('div');
+    item.className = 'dropdown-item';
+    item.textContent = value;
     
-  } else {
-    searchInput.placeholder=`Search ${header}...`;
-    const def=document.createElement('option'); def.value=""; def.textContent=`-- Select ${header} --`; select.appendChild(def);
-  }
-  const dropdownList=document.createElement('div');
-  dropdownList.className='dropdown-list'; dropdownList.style.display='none';
-  const uniqueValues=[...new Set(limitedCSVData.map(row=>row[columnIndex]))].filter(v=>v).sort();
-  uniqueValues.forEach(value=>{
-    const opt=document.createElement('option'); opt.value=value; opt.textContent=value;
-    if(columnIndex!==1) select.appendChild(opt);
-    const item=document.createElement('div'); item.className='dropdown-item'; item.textContent=value;
-    item.onclick=()=>{
-      if(columnIndex===1) return;
-      select.value=value; searchInput.value=value; dropdownList.style.display='none'; updateNextDropdowns(columnIndex);
-    };
-    dropdownList.appendChild(item);
-  });
-  if(columnIndex!==1){
-    searchInput.onfocus=()=>{ dropdownList.style.display='block'; };
-    searchInput.oninput=function(){
-      const term=this.value.toLowerCase();
-      dropdownList.querySelectorAll('.dropdown-item').forEach(item=>{
-        item.style.display=item.textContent.toLowerCase().includes(term)?'block':'none';
-      });
-    };
-  }
-  document.addEventListener('click',(e)=>{ if(!wrapper.contains(e.target)) dropdownList.style.display='none'; });
-  wrapper.appendChild(searchInput); wrapper.appendChild(select); wrapper.appendChild(dropdownList);
-  container.appendChild(wrapper);
+    item.onclick = () => {
+      select.value = value;
+      searchInput.value = value;
+      dropdownList.style.display = 'none';
+      updateNextDropdowns(columnIndex);
+    };
+    dropdownList.appendChild(item);
+  });
+
+  // 6. Search Functionality
+  searchInput.onfocus = () => {
+    dropdownList.style.display = 'block';
+  };
+  
+  searchInput.oninput = function() {
+    const term = this.value.toLowerCase();
+    dropdownList.querySelectorAll('.dropdown-item').forEach(item => {
+      item.style.display = item.textContent.toLowerCase().includes(term) ? 'block' : 'none';
+    });
+  };
+
+  // 7. Close on Click Outside
+  document.addEventListener('click', (e) => {
+    if (!wrapper.contains(e.target)) {
+      dropdownList.style.display = 'none';
+    }
+  });
+
+  // 8. Append Elements
+  wrapper.appendChild(searchInput);
+  wrapper.appendChild(select);
+  wrapper.appendChild(dropdownList);
+  container.appendChild(wrapper);
 }
 
 function createRegularDropdown(container,header,columnIndex){
@@ -1023,55 +1048,148 @@ function cleanupResources(img, canvas) {
 }
 
 function createTrackingForm(){
-  const trackingForm=document.getElementById('trackingForm');trackingForm.innerHTML='';
-  const dropdownsContainer=document.createElement('div');dropdownsContainer.className='tracking-dropdowns';
-  const container1=document.createElement('div');container1.className='form-field';
-  const label1=document.createElement('label');label1.textContent=headers[1]+' *';container1.appendChild(label1);
-  const fixedInput=document.createElement('input');
-  fixedInput.type='text';fixedInput.id='tracking-dropdown-1';fixedInput.className='tracking-dropdown';fixedInput.value='208';fixedInput.readOnly=true;fixedInput.style.backgroundColor='#f0f0f0';
-  const hiddenSelect=document.createElement('select');
-  hiddenSelect.id='tracking-hidden-select-1';hiddenSelect.style.display='none';
-  const hiddenOption=document.createElement('option');hiddenOption.value='208';hiddenOption.selected=true;hiddenSelect.appendChild(hiddenOption);
-  container1.appendChild(fixedInput);container1.appendChild(hiddenSelect);dropdownsContainer.appendChild(container1);
-  const container2=document.createElement('div');container2.className='form-field';
-  const label2=document.createElement('label');label2.textContent=headers[2];container2.appendChild(label2);
-  const select2=document.createElement('select');
-  select2.id='tracking-dropdown-2';select2.className='tracking-dropdown';select2.disabled=true;select2.innerHTML=`<option value="">-- Select ${headers[2]} --</option>`;
-  select2.onchange=()=>{const selectedValue1='208',selectedValue2=select2.value;if(selectedValue1&&selectedValue2) updateTrackingDropdown(3,selectedValue1,selectedValue2);};
-  container2.appendChild(select2);dropdownsContainer.appendChild(container2);
-  const container3=document.createElement('div');container3.className='form-field';
-  const label3=document.createElement('label');label3.textContent=headers[3];container3.appendChild(label3);
-  const select3=document.createElement('select');
-  select3.id='tracking-dropdown-3';select3.className='tracking-dropdown';select3.disabled=true;select3.innerHTML=`<option value="">-- Select ${headers[3]} --</option>`;
-  select3.onchange=()=>{
-    const selectedValue1='208',selectedValue2=document.getElementById('tracking-dropdown-2').value,selectedValue3=select3.value;
-    if(selectedValue1&&selectedValue2&&selectedValue3) searchTrackingData(selectedValue1,selectedValue2,selectedValue3);
-  };
-  container3.appendChild(select3);dropdownsContainer.appendChild(container3);trackingForm.appendChild(dropdownsContainer);
-  setTimeout(()=>{updateTrackingDropdown(2,'208');},100);
+  const trackingForm=document.getElementById('trackingForm');
+  trackingForm.innerHTML='';
+  const dropdownsContainer=document.createElement('div');
+  dropdownsContainer.className='tracking-dropdowns';
+  
+  // --- 1. Column 1 (Dynamic Dropdown) ---
+  const container1=document.createElement('div');
+  container1.className='form-field';
+  const label1=document.createElement('label');
+  label1.textContent=headers[1]+' *';
+  container1.appendChild(label1);
+  
+  const select1=document.createElement('select');
+  select1.id='tracking-dropdown-1';
+  select1.className='tracking-dropdown';
+  select1.innerHTML=`<option value="">-- Select ${headers[1]} --</option>`;
+  
+  // Get Unique Values from CSV for Column 1
+  const uniqueCol1 = [...new Set(limitedCSVData.map(row=>row[1]))]
+    .filter(v=>v)
+    .sort((a,b)=>{
+       const numA=parseInt(a),numB=parseInt(b);
+       if(!isNaN(numA)&&!isNaN(numB)) return numA-numB;
+       return a.localeCompare(b);
+    });
+
+  uniqueCol1.forEach(val => {
+      const opt = document.createElement('option');
+      opt.value = val;
+      opt.textContent = val;
+      select1.appendChild(opt);
+  });
+  
+  select1.onchange = () => {
+     updateTrackingDropdown(2); // Trigger update for next dropdown
+  };
+  container1.appendChild(select1);
+  dropdownsContainer.appendChild(container1);
+
+  // --- 2. Column 2 ---
+  const container2=document.createElement('div');
+  container2.className='form-field';
+  const label2=document.createElement('label');
+  label2.textContent=headers[2];
+  container2.appendChild(label2);
+  
+  const select2=document.createElement('select');
+  select2.id='tracking-dropdown-2';
+  select2.className='tracking-dropdown';
+  select2.disabled=true;
+  select2.innerHTML=`<option value="">-- Select ${headers[2]} --</option>`;
+  
+  select2.onchange=()=>{
+      updateTrackingDropdown(3);
+  };
+  container2.appendChild(select2);
+  dropdownsContainer.appendChild(container2);
+
+  // --- 3. Column 3 ---
+  const container3=document.createElement('div');
+  container3.className='form-field';
+  const label3=document.createElement('label');
+  label3.textContent=headers[3];
+  container3.appendChild(label3);
+  
+  const select3=document.createElement('select');
+  select3.id='tracking-dropdown-3';
+  select3.className='tracking-dropdown';
+  select3.disabled=true;
+  select3.innerHTML=`<option value="">-- Select ${headers[3]} --</option>`;
+  
+  select3.onchange=()=>{
+    const val1 = document.getElementById('tracking-dropdown-1').value;
+    const val2 = document.getElementById('tracking-dropdown-2').value;
+    const val3 = select3.value;
+    if(val1 && val2 && val3) searchTrackingData(val1, val2, val3);
+  };
+  container3.appendChild(select3);
+  dropdownsContainer.appendChild(container3);
+  
+  trackingForm.appendChild(dropdownsContainer);
 }
 
-function updateTrackingDropdown(columnIndex,...selectedValues){
-  const select=document.getElementById(`tracking-dropdown-${columnIndex}`);if(!select) return;
-  select.innerHTML=`<option value="">-- Select ${headers[columnIndex]} --</option>`;select.disabled=true;
-  const filters={1:'208'};
-  for(let i=2;i<columnIndex;i++){
-    const prevSelect=document.getElementById(`tracking-dropdown-${i}`);
-    if(prevSelect&&prevSelect.value) filters[i]=prevSelect.value;
-  }
-  const filteredRows=limitedCSVData.filter(row=>Object.keys(filters).every(k=>row[k]===filters[k]));
-  const uniqueValues=[...new Set(filteredRows.map(row=>row[columnIndex]))].filter(v=>v).sort((a,b)=>{
-    const numA=parseInt(a),numB=parseInt(b);if(!isNaN(numA)&&!isNaN(numB)) return numA-numB;return a.localeCompare(b);
-  });
-  if(uniqueValues.length>0){
-    select.disabled=false;uniqueValues.forEach(value=>{const opt=document.createElement('option');opt.value=value;opt.textContent=value;select.appendChild(opt);});
-    for(let i=columnIndex+1;i<=3;i++){
-      const downstreamSelect=document.getElementById(`tracking-dropdown-${i}`);
-      if(downstreamSelect){downstreamSelect.innerHTML=`<option value="">-- Select ${headers[i]} --</option>`;downstreamSelect.disabled=true;}
-    }
-    document.getElementById('trackingResults').innerHTML='';
-    if(uniqueValues.length===1){select.value=uniqueValues[0];select.onchange();}
-  }
+function updateTrackingDropdown(columnIndex){
+  const select=document.getElementById(`tracking-dropdown-${columnIndex}`);
+  if(!select) return;
+  
+  select.innerHTML=`<option value="">-- Select ${headers[columnIndex]} --</option>`;
+  select.disabled=true;
+  
+  const filters={};
+  
+  // Dynamic Filtering based on previous selections
+  if(columnIndex === 2) {
+      const val1 = document.getElementById('tracking-dropdown-1').value;
+      if(val1) filters[1] = val1;
+      else return; // Don't populate if parent is empty
+  }
+  else if(columnIndex === 3) {
+      const val1 = document.getElementById('tracking-dropdown-1').value;
+      const val2 = document.getElementById('tracking-dropdown-2').value;
+      if(val1) filters[1] = val1;
+      if(val2) filters[2] = val2;
+      else return;
+  }
+
+  const filteredRows=limitedCSVData.filter(row=>Object.keys(filters).every(k=>row[k]===filters[k]));
+  
+  const uniqueValues=[...new Set(filteredRows.map(row=>row[columnIndex]))].filter(v=>v).sort((a,b)=>{
+    const numA=parseInt(a),numB=parseInt(b);
+    if(!isNaN(numA)&&!isNaN(numB)) return numA-numB;
+    return a.localeCompare(b);
+  });
+  
+  if(uniqueValues.length>0){
+    select.disabled=false;
+    uniqueValues.forEach(value=>{
+        const opt=document.createElement('option');
+        opt.value=value;
+        opt.textContent=value;
+        select.appendChild(opt);
+    });
+    
+    // Reset downstream dropdowns
+    for(let i=columnIndex+1;i<=3;i++){
+      const downstreamSelect=document.getElementById(`tracking-dropdown-${i}`);
+      if(downstreamSelect){
+          downstreamSelect.innerHTML=`<option value="">-- Select ${headers[i]} --</option>`;
+          downstreamSelect.disabled=true;
+      }
+    }
+    
+    document.getElementById('trackingResults').innerHTML='';
+    
+    // Auto-select if only one option exists
+    if(uniqueValues.length===1){
+        select.value=uniqueValues[0];
+        // Trigger change for the next level manually
+        if(columnIndex < 3) updateTrackingDropdown(columnIndex + 1);
+        else select.onchange(); 
+    }
+  }
 }
 
 function searchTrackingData(value1, value2 = null, value3 = null) {
