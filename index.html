@@ -209,7 +209,7 @@ let compressionQueue=[];
 let isCompressing=false;
 let lastMemoryCheck = 0;
 const MEMORY_CHECK_INTERVAL = 1000;
-
+let pageLoadTime = Date.now();
 function shouldDelayCompression() {
   const now = Date.now();
   if (now - lastMemoryCheck < MEMORY_CHECK_INTERVAL && lastMemoryCheck !== 0) return false;
@@ -1532,23 +1532,39 @@ function startAppSession(loginTime) {
     // Start Timer Interval
     setInterval(() => {
         const now = Date.now();
-        const timeLeft = SESSION_DURATION - (now - loginTime);
         
+        // 1. Session Expiry Check (1 Hour)
+        const timeLeft = SESSION_DURATION - (now - loginTime);
         if (timeLeft <= 0) {
-            // Session Expired
             localStorage.removeItem('app_login_time');
-            location.reload(); // Force reload to show login screen
+            location.reload(); 
+            return;
         } else {
-            // Update Timer Display
             const minutes = Math.floor(timeLeft / 60000);
             const seconds = Math.floor((timeLeft % 60000) / 1000);
             document.getElementById('sessionTimer').innerText = 
                 `Session Left: ${minutes}m ${seconds}s`;
         }
+        const timeSinceRefresh = now - pageLoadTime;
+        const cleanupInterval = 15 * 60 * 1000; // 15 Minutes
+
+        if (timeSinceRefresh > cleanupInterval) {
+            // Safety Check: Is the user busy?
+            // We check if "isCompressing" is true OR if the Upload Modal is open
+            const modal = document.getElementById('confirmModal');
+            const isBusy = isCompressing || (modal && modal.style.display !== 'none');
+
+            if (!isBusy) {
+                console.log("Auto-reloading to free memory...");
+                location.reload(); // This clears RAM and prevents crashes
+            } else {
+                console.log("Memory cleanup delayed: User is busy.");
+            }
+        }
+
     }, 1000);
 }
 
-// --- UPDATED WINDOW.ONLOAD ---
 window.onload = async function() {
     // 1. Check Session
     const storedTime = localStorage.getItem('app_login_time');
