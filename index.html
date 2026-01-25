@@ -808,7 +808,7 @@ function updateStatusCountsOnly(filterValue) {
   let col22FilledCount = 0;
   
   filteredRows.forEach(row => {
-    const val3 = row[3] || '';
+    const val3 = row[0] || '';
     if(val3.trim() !== '') uniqueCol3.add(val3);
     
     const val20 = row[20] || '';
@@ -1467,7 +1467,7 @@ function searchTrackingData(value1, value2 = null, value3 = null) {
 }
 
 function submitVerification(statusText,idValue){
-  const SCRIPT_URL='https://script.google.com/macros/s/AKfycbzln6bsC6nVnjc0NR88jz0J_d6v-ZuCgGPj1ec1y82OHGf8-JDGjrr3kukrsJhGBwEJIw/exec';
+  const SCRIPT_URL='https://script.google.com/macros/s/AKfycbxWFPwah8jBC6RK13Yduk24r5W1Y1yn-OiyIIJSZsTmFiaFvh5o0ILZF1LTtLOsZVfyNQ/exec';
   const now=new Date(),day=now.getDate(),month=now.toLocaleString('en-GB',{month:'short'}),year=now.getFullYear();
   let hours=now.getHours(),minutes=now.getMinutes().toString().padStart(2,'0'),ampm=hours>=12?'pm':'am';
   hours=hours%12;hours=hours?hours:12;
