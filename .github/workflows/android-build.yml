@@ -49,17 +49,16 @@ jobs:
           MANIFEST_FILE=android/app/src/main/AndroidManifest.xml
           sed -i '/<manifest/a \    <uses-permission android:name="android.permission.CAMERA" />\n    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />\n    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />' $MANIFEST_FILE
 
-      # 5. FORCE OVERWRITE LOGO & SPLASH SCREEN
+      # 5. FORCE OVERWRITE LOGO & SPLASH
       - name: Update App Icon & Splash
         run: |
           echo "Overwriting Android Icons..."
           RES_DIR=android/app/src/main/res
           
-          # --- A. NUCLEAR FIX: DELETE ADAPTIVE ICONS FOLDER ---
-          # Forces Android to use our PNGs instead of the default XML
+          # Delete adaptive icon folder so Android uses our PNGs
           rm -rf $RES_DIR/mipmap-anydpi-v26
           
-          # --- B. OVERWRITE LAUNCHER ICONS ---
+          # Copy logo to all icon folders
           cp logo.png $RES_DIR/mipmap-mdpi/ic_launcher.png
           cp logo.png $RES_DIR/mipmap-hdpi/ic_launcher.png
           cp logo.png $RES_DIR/mipmap-xhdpi/ic_launcher.png
@@ -71,21 +70,14 @@ jobs:
           cp logo.png $RES_DIR/mipmap-xhdpi/ic_launcher_round.png
           cp logo.png $RES_DIR/mipmap-xxhdpi/ic_launcher_round.png
           cp logo.png $RES_DIR/mipmap-xxxhdpi/ic_launcher_round.png
-          
-          # --- C. OVERWRITE SPLASH SCREEN ---
-          echo "Overwriting Splash Screen..."
+
+          # Update Splash Screen
           SPLASH_DIR=android/app/src/main/res/drawable
           mkdir -p $SPLASH_DIR
-          
-          # Copy logo to splash.png
           cp logo.png $SPLASH_DIR/splash.png
-          
-          # Handle landscape splash if the folder exists
           if [ -d android/app/src/main/res/drawable-land ]; then
              cp logo.png android/app/src/main/res/drawable-land/splash.png
           fi
-          
-          echo "Icons and Splash updated successfully."
 
       # 6. Build APK
       - name: Build APK
@@ -94,7 +86,13 @@ jobs:
           cd android
           ./gradlew assembleDebug
 
-      # 7. Upload Result
+      # 7. RENAME THE FILE (The Fix)
+      - name: Rename APK to AERO
+        run: |
+          cd android/app/build/outputs/apk/debug/
+          mv app-debug.apk AERO.apk
+
+      # 8. Upload Result
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
