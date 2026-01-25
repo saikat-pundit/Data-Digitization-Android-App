@@ -1,195 +1,238 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AERO 206 to 216</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    <style>
-        .form-field { margin-bottom: 18px; width: 100%; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; }
-        .form-field label { display: block; font-weight: 600; margin-bottom: 8px; color: #000; font-size: 14px; }
-        .searchable-dropdown-wrapper, .status-filter-container { position: relative; width: 100%; max-width: 300px; margin-bottom: 20px; text-align: left; }
-        .post-body, h3 { color: black; }
-        .search-input, .dropdown-select, .file-input, .datetime-field, .docname-input, .status-filter-dropdown, .tracking-dropdown { width: 100%; max-width: 300px; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; box-sizing: border-box; background: #fff; color: black; font-weight: bold; }
-        .datetime-field { background-color: #f8f9fa; color: #666; cursor: not-allowed; }
-        .docname-input { margin-top: 8px; border: 1px dashed #007bff; }
-        .dropdown-list { display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ccc; border-radius: 0 0 6px 6px; max-height: 200px; overflow-y: auto; z-index: 1000; }
-        .dropdown-item { padding: 10px; cursor: pointer; transition: background 0.2s; }
-        .dropdown-item:hover { background: #f0f0f0; }
-        .tabs { display: flex; justify-content: center; margin: 20px 0; border-bottom: 2px solid #ddd; }
-        .tab-btn { padding: 10px; background: #f5f5f5; border: none; border-radius: 6px 6px 0 0; font-size: 16px; cursor: pointer; margin: 0 5px; transition: all 0.3s; color: #666; white-space: nowrap;}
-        .tab-btn.active { background: #333; font-weight: bold; color: white; border-bottom: 3px solid #3498db; white-space: nowrap;}
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        .submit-btn, .verify-btn, .verify-modal-btn, .clear-btn { color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
-        .submit-btn { padding: 12px 24px; background-color: #007bff; font-size: 16px; }
-        .submit-btn:hover { background-color: #0056b3; }
-        .verify-btn { padding: 12px 20px; font-size: 14px; margin: 0 5px; }
-        .verify-btn:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        .verify-action { background: linear-gradient(135deg, #28a745, #20c997); }
-        .reject-action { background: linear-gradient(135deg, #dc3545, #e35d6a); }
-        .clear-btn { background-color: #ff4444; padding: 8px 12px; font-size: 14px; margin-left: 10px; }
-        .clear-btn:hover { background-color: #cc0000; }
-        .action-buttons { text-align: center; margin: 20px 0; }
-        .status-counts-container { display: flex; justify-content: space-around; margin: 20px 0; gap: 5px; }
-        .count-box { border-radius: 8px; text-align: center; white-space: nowrap; }
-        .count-box strong { display: block; margin-bottom: 5px; color: #000; }
-        .tracking-table td { text-align: center; vertical-align: top; }
-        .tracking-table tr:hover { background-color: #f5f5f5; }
-        .status-table { width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; }
-        .status-table thead { position: sticky; top: 0; z-index: 10; }
-        .status-table th { background-color: #2c3e50; color: white; padding: 3px 9px; text-align: center; font-weight: bold; border-bottom: 1px solid #34495e; }
-        .status-table td { padding: 10px 8px; border-bottom: 1px solid #ddd; text-align: center;}
-        .status-table tbody tr:hover { background-color: #f5f5f5; }
-        .status-table .row-missing-eci { background-color: #8b0000 !important; color: white !important; }
-        .status-table .row-missing-eci:hover { background-color: #a52a2a !important; }
-        .status-table .row-rejected { background-color: #ffcc00 !important; color: black !important; font-weight: bold; }
-        .status-table .row-missing-eci .cell-rejected { background-color: #ffcc00 !important; color: black !important; }
-        .status-table tbody tr:nth-child(even) { background-color: #f9f9f9; }
-        .status-table tbody tr:nth-child(even).row-missing-eci { background-color: #8b0000 !important; }
-        .status-table th:nth-child(3), .status-table td:nth-child(3) { width: 40%; }
-        .status-table-container { max-height: 400px; overflow: auto; }
-        .status-table { min-width: 600px; }
-        .no-selection-message, .no-data-message, .loading-spinner, .image-loading { text-align: center; padding: 40px; color: #6c757d; font-size: 18px; background: #f8f9fa; border-radius: 8px; margin: 20px 0; border: 1px dashed #dee2e6; }
-        .no-selection-message i, .no-data-message i { font-size: 24px; margin-bottom: 10px; display: block; color: #999; }
-        .no-data-message { display: flex; flex-direction: column; align-items: center; gap: 10px; }
-        .loading-spinner, .image-loading { color: #666; padding: 20px; }
-        .spinner { display: inline-block; margin-right: 10px; }
-        .time-container, .status-row { text-align: center; padding: 15px; margin: 20px 0; background: #f8f9fa; border-radius: 4px; font-size: 16px; }
-        .tracking-header { font-weight: bold; color: #333; margin-bottom: 8px; text-align: center; font-size: 14px; padding: 5px; background: #f8f9fa; border-radius: 4px; }
-        .tracking-image { border: 1px solid #ddd; border-radius: 4px; padding: 3px; background: white; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1); max-width: 100%; height: auto; margin: 0 auto; }
-        .tracking-image:hover { transform: scale(1.03); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
-        .modal, .verify-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(3px); }
-        .modal-content, .verify-modal-content { background: white; padding: 25px; border-radius: 12px; text-align: center; width: 90%; max-width: 300px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); animation: modalFadeIn 0.3s ease-out; }
-        .verify-modal-content { max-width: 450px; padding: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.25); }
-        @keyframes modalFadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
-        .modal-btns, .verify-modal-buttons { display: flex; gap: 12px; margin-top: 20px; justify-content: center; }
-        .verify-modal-buttons { margin-top: 25px; gap: 15px; }
-        .verify-modal-btn { padding: 12px 25px; font-size: 14px; }
-        .verify-modal-confirm { background: linear-gradient(135deg, #28a745, #20c997); color: white; }
-        .verify-modal-confirm:hover { background: linear-gradient(135deg, #218838, #1ea085); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(40,167,69,0.3); }
-        .verify-modal-cancel { background: linear-gradient(135deg, #6c757d, #868e96); color: white; }
-        .verify-modal-cancel:hover { background: linear-gradient(135deg, #5a6268, #727b84); transform: translateY(-2px); }
-        .reject-comment-section { margin: 20px 0; text-align: left; }
-        .reject-comment-section label { display: block; margin-bottom: 8px; font-weight: 500; color: #495057; }
-        .reject-comment { width: 100%; border: 2px solid #e9ecef; border-radius: 6px; font-size: 14px; resize: vertical; transition: border-color 0.2s; font-family: inherit; }
-        .reject-comment:focus { outline: none; border-color: #007bff; box-shadow: 0 0 0 3px rgba(0,123,255,0.1); }
-        .reject-comment:invalid { border-color: #dc3545; }
-        .progress-container { width: 100%; background-color: #f0f0f0; border-radius: 10px; margin: 20px 0; overflow: hidden; }
-        .progress-bar { height: 20px; background-color: #4CAF50; width: 0%; border-radius: 10px; transition: width 0.3s ease; }
-        .upload-status, .timer-display { text-align: center; margin: 10px 0; font-weight: bold; }
-        .timer-display { font-size: 30px; font-weight: bold; margin: 10px 0; }
-        .recording-spinner { display: inline-flex; align-items: center; margin-right: 10px; }
-        .modal-content { animation: modalSlideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        @keyframes modalSlideIn { from { opacity: 0; transform: translateY(-30px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
-        .confirm-btn:hover, .cancel-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-        .documents-list::-webkit-scrollbar { width: 6px; }
-        .documents-list::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
-        .documents-list::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 10px; }
-        .documents-list::-webkit-scrollbar-thumb:hover { background: #a1a1a1; }
-        .animated-title, .app-header .fa-database { margin: 0; font-size: 2em; color: white; background: linear-gradient( 90deg, #FF0000, #FF6600, #FFD700, #00FF00, #00FFFF, #0080FF, #8000FF, #FF00FF, #FF0080, #FF0000 ); background-size: 300% 100%; border-radius: 5px; display: block; max-width: 90%; white-space: normal; line-height: 1.4; position: sticky; top: 0; z-index: 10; animation: flow-colors 0.5s ease-in-out infinite alternate; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); }
-        @keyframes flow-colors { 0% { background-position: 0% 50%; } 100% { background-position: 100% 50%; } }
-        .app-header { border-radius: 10px; margin-bottom: 20px; }
-        .app-header .fa-database { font-size: 2em; }
-        .camera-btn { background: #2c3e50; color: white; padding: 12px; width: 100%; border-radius: 6px; border: none; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 10px; }
-        .camera-btn:active { transform: scale(0.98); }
-#login-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: #2c3e50; z-index: 9999;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-}
-.login-box {
-    background: white; padding: 30px; border-radius: 12px; width: 85%; max-width: 320px;
-    text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-}
-.login-input {
-    width: 100%; 
-    padding: 12px; 
-    margin: 15px 0; 
-    border: 2px solid #ddd;
-    border-radius: 6px; 
-    font-size: 16px; 
-    text-align: center;
-    box-sizing: border-box; /* This fixes the right-side sticking issue */
-}
-.login-btn {
-    width: 100%; padding: 12px; background: #27ae60; color: white;
-    border: none; border-radius: 6px; font-size: 16px; font-weight: bold;
-}
-.preview-img {
-    width: 100%; max-height: 200px; object-fit: contain;
-    border-radius: 6px; border: 1px solid #ddd; margin-top: 10px; display: none;
-}
-.header-controls {
-    display: flex; justify-content: space-between; align-items: center;
-    background: white; padding: 10px; border-radius: 8px; margin-bottom: 15px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-}
-.refresh-btn {
-    background: none; border: none; font-size: 18px; cursor: pointer;
-    color: #27ae60; padding: 5px;
-}
-.session-timer {
-    font-size: 12px; font-weight: bold; color: #e67e22;
-}
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AERO</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>
+        /* --- CORE LAYOUT & THEME (RESTORED) --- */
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+        .main-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 15px;
+            padding-bottom: 80px;
+            min-height: 100vh;
+        }
+        .form-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+            border: 1px solid #ffffff;
+        }
+        .app-header {
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            color: white;
+            box-shadow: 0 8px 20px rgba(44, 62, 80, 0.3);
+            text-align: center;
+        }
+        
+        /* --- FORM ELEMENTS --- */
+        .form-field { margin-bottom: 18px; width: 100%; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; }
+        .form-field label { display: block; font-weight: 600; margin-bottom: 8px; color: #000; font-size: 14px; }
+        .searchable-dropdown-wrapper, .status-filter-container { position: relative; width: 100%; max-width: 300px; margin-bottom: 20px; text-align: left; }
+        .post-body, h3 { color: black; }
+        .search-input, .dropdown-select, .file-input, .datetime-field, .docname-input, .status-filter-dropdown, .tracking-dropdown { width: 100%; max-width: 300px; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; box-sizing: border-box; background: #fff; color: black; font-weight: bold; }
+        .datetime-field { background-color: #f8f9fa; color: #666; cursor: not-allowed; }
+        .docname-input { margin-top: 8px; border: 1px dashed #007bff; }
+        .dropdown-list { display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ccc; border-radius: 0 0 6px 6px; max-height: 200px; overflow-y: auto; z-index: 1000; }
+        .dropdown-item { padding: 10px; cursor: pointer; transition: background 0.2s; }
+        .dropdown-item:hover { background: #f0f0f0; }
+        
+        /* --- TABS --- */
+        .tabs { display: flex; justify-content: center; margin: 20px 0; border-bottom: 2px solid #ddd; }
+        .tab-btn { padding: 10px; background: #f5f5f5; border: none; border-radius: 6px 6px 0 0; font-size: 16px; cursor: pointer; margin: 0 5px; transition: all 0.3s; color: #666; white-space: nowrap;}
+        .tab-btn.active { background: #333; font-weight: bold; color: white; border-bottom: 3px solid #3498db; white-space: nowrap;}
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        /* --- BUTTONS --- */
+        .submit-btn, .verify-btn, .verify-modal-btn, .clear-btn { color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+        .submit-btn { padding: 12px 24px; background-color: #007bff; font-size: 16px; }
+        .submit-btn:hover { background-color: #0056b3; }
+        .verify-btn { padding: 12px 20px; font-size: 14px; margin: 0 5px; }
+        .verify-btn:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .verify-action { background: linear-gradient(135deg, #28a745, #20c997); }
+        .reject-action { background: linear-gradient(135deg, #dc3545, #e35d6a); }
+        .clear-btn { background-color: #ff4444; padding: 8px 12px; font-size: 14px; margin-left: 10px; }
+        .clear-btn:hover { background-color: #cc0000; }
+        .camera-btn { background: #2c3e50; color: white; padding: 12px; width: 100%; border-radius: 6px; border: none; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 10px; }
+        .camera-btn:active { transform: scale(0.98); }
+        
+        /* --- STATUS & TRACKING --- */
+        .action-buttons { text-align: center; margin: 20px 0; }
+        .status-counts-container { display: flex; justify-content: space-around; margin: 20px 0; gap: 5px; }
+        .count-box { border-radius: 8px; text-align: center; white-space: nowrap; }
+        .count-box strong { display: block; margin-bottom: 5px; color: #000; }
+        .tracking-table td { text-align: center; vertical-align: top; }
+        .tracking-table tr:hover { background-color: #f5f5f5; }
+        .status-table { width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; min-width: 600px; }
+        .status-table thead { position: sticky; top: 0; z-index: 10; }
+        .status-table th { background-color: #2c3e50; color: white; padding: 3px 9px; text-align: center; font-weight: bold; border-bottom: 1px solid #34495e; }
+        .status-table td { padding: 10px 8px; border-bottom: 1px solid #ddd; text-align: center;}
+        .status-table tbody tr:hover { background-color: #f5f5f5; }
+        .status-table .row-missing-eci { background-color: #8b0000 !important; color: white !important; }
+        .status-table .row-missing-eci:hover { background-color: #a52a2a !important; }
+        .status-table .row-rejected { background-color: #ffcc00 !important; color: black !important; font-weight: bold; }
+        .status-table .row-missing-eci .cell-rejected { background-color: #ffcc00 !important; color: black !important; }
+        .status-table tbody tr:nth-child(even) { background-color: #f9f9f9; }
+        .status-table tbody tr:nth-child(even).row-missing-eci { background-color: #8b0000 !important; }
+        .status-table th:nth-child(3), .status-table td:nth-child(3) { width: 40%; }
+        .status-table-container { max-height: 400px; overflow: auto; background: white; border-radius: 8px; }
+        
+        /* --- MESSAGES & LOADING --- */
+        .no-selection-message, .no-data-message, .loading-spinner, .image-loading { text-align: center; padding: 40px; color: #6c757d; font-size: 18px; background: #f8f9fa; border-radius: 8px; margin: 20px 0; border: 1px dashed #dee2e6; }
+        .no-selection-message i, .no-data-message i { font-size: 24px; margin-bottom: 10px; display: block; color: #999; }
+        .no-data-message { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .loading-spinner, .image-loading { color: #666; padding: 20px; }
+        .spinner { display: inline-block; margin-right: 10px; }
+        .time-container, .status-row { text-align: center; padding: 15px; margin: 20px 0; background: #f8f9fa; border-radius: 4px; font-size: 16px; }
+        .tracking-header { font-weight: bold; color: #333; margin-bottom: 8px; text-align: center; font-size: 14px; padding: 5px; background: #f8f9fa; border-radius: 4px; }
+        .tracking-image { border: 1px solid #ddd; border-radius: 4px; padding: 3px; background: white; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1); max-width: 100%; height: auto; margin: 0 auto; }
+        .tracking-image:hover { transform: scale(1.03); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+        .preview-img { width: 100%; max-height: 200px; object-fit: contain; border-radius: 6px; border: 1px solid #ddd; margin-top: 10px; display: none; }
+
+        /* --- MODALS --- */
+        .modal, .verify-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(3px); }
+        .modal-content, .verify-modal-content { background: white; padding: 25px; border-radius: 12px; text-align: center; width: 90%; max-width: 300px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); animation: modalFadeIn 0.3s ease-out; }
+        .verify-modal-content { max-width: 450px; padding: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.25); }
+        @keyframes modalFadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        .modal-btns, .verify-modal-buttons { display: flex; gap: 12px; margin-top: 20px; justify-content: center; }
+        .verify-modal-buttons { margin-top: 25px; gap: 15px; }
+        .verify-modal-btn { padding: 12px 25px; font-size: 14px; }
+        .verify-modal-confirm { background: linear-gradient(135deg, #28a745, #20c997); color: white; }
+        .verify-modal-confirm:hover { background: linear-gradient(135deg, #218838, #1ea085); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(40,167,69,0.3); }
+        .verify-modal-cancel { background: linear-gradient(135deg, #6c757d, #868e96); color: white; }
+        .verify-modal-cancel:hover { background: linear-gradient(135deg, #5a6268, #727b84); transform: translateY(-2px); }
+        .reject-comment-section { margin: 20px 0; text-align: left; }
+        .reject-comment-section label { display: block; margin-bottom: 8px; font-weight: 500; color: #495057; }
+        .reject-comment { width: 100%; border: 2px solid #e9ecef; border-radius: 6px; font-size: 14px; resize: vertical; transition: border-color 0.2s; font-family: inherit; }
+        .reject-comment:focus { outline: none; border-color: #007bff; box-shadow: 0 0 0 3px rgba(0,123,255,0.1); }
+        .reject-comment:invalid { border-color: #dc3545; }
+        .progress-container { width: 100%; background-color: #f0f0f0; border-radius: 10px; margin: 20px 0; overflow: hidden; }
+        .progress-bar { height: 20px; background-color: #4CAF50; width: 0%; border-radius: 10px; transition: width 0.3s ease; }
+        .upload-status, .timer-display { text-align: center; margin: 10px 0; font-weight: bold; }
+        .timer-display { font-size: 30px; font-weight: bold; margin: 10px 0; }
+        .recording-spinner { display: inline-flex; align-items: center; margin-right: 10px; }
+        .modal-content { animation: modalSlideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes modalSlideIn { from { opacity: 0; transform: translateY(-30px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        .confirm-btn:hover, .cancel-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .documents-list::-webkit-scrollbar { width: 6px; }
+        .documents-list::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        .documents-list::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 10px; }
+        .documents-list::-webkit-scrollbar-thumb:hover { background: #a1a1a1; }
+        
+        /* --- APP HEADER ANIMATION --- */
+        .animated-title, .app-header .fa-database { margin: 0; font-size: 2em; color: white; background: linear-gradient( 90deg, #FF0000, #FF6600, #FFD700, #00FF00, #00FFFF, #0080FF, #8000FF, #FF00FF, #FF0080, #FF0000 ); background-size: 300% 100%; border-radius: 5px; display: block; max-width: 90%; white-space: normal; line-height: 1.4; position: sticky; top: 0; z-index: 10; animation: flow-colors 0.5s ease-in-out infinite alternate; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); }
+        @keyframes flow-colors { 0% { background-position: 0% 50%; } 100% { background-position: 100% 50%; } }
+        .app-header { border-radius: 10px; margin-bottom: 20px; }
+        .app-header .fa-database { font-size: 2em; }
+
+        /* --- LOGIN SCREEN --- */
+        #login-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #2c3e50; z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .login-box {
+            background: white; padding: 30px; border-radius: 12px; width: 85%; max-width: 320px;
+            text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+        .login-input {
+            width: 100%; padding: 12px; margin: 15px 0; border: 2px solid #ddd;
+            border-radius: 6px; font-size: 16px; text-align: center;
+            box-sizing: border-box; 
+        }
+        .login-btn {
+            width: 100%; padding: 12px; background: #27ae60; color: white;
+            border: none; border-radius: 6px; font-size: 16px; font-weight: bold;
+        }
+        
+        /* --- HEADER CONTROLS --- */
+        .header-controls {
+            display: flex; justify-content: space-between; align-items: center;
+            background: white; padding: 12px 15px; border-radius: 10px; margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .refresh-btn {
+            background: none; border: none; font-size: 18px; cursor: pointer;
+            color: #27ae60; padding: 5px;
+        }
+        .session-timer {
+            font-size: 12px; font-weight: bold; color: #e67e22;
+        }
+    </style>
 </head>
 <body>
-    <div id="login-overlay">
-        <div class="login-box">
-            <h2 style="color:#333; margin-top:0;">SECURE ACCESS</h2>
-            <p style="color:#666; font-size:14px;">Enter Password to Continue</p>
-            <input type="password" id="appPassword" class="login-input" placeholder="Password">
-            <button class="login-btn" onclick="attemptLogin()">ENTER</button>
-            <p id="loginError" style="color:red; display:none; margin-top:10px;">Incorrect Password</p>
-        </div>
-    </div>
+    <div id="login-overlay">
+        <div class="login-box">
+            <h2 style="color:#333; margin-top:0;">SECURE ACCESS</h2>
+            <p style="color:#666; font-size:14px;">Enter Password to Continue</p>
+            <input type="password" id="appPassword" class="login-input" placeholder="Password">
+            <button class="login-btn" onclick="attemptLogin()">ENTER</button>
+            <p id="loginError" style="color:red; display:none; margin-top:10px;">Incorrect Password</p>
+        </div>
+    </div>
 
-    <div id="main-app" style="display:none;">
-        <div class="main-container">
-            
-            <div class="header-controls">
-                <div class="session-timer" id="sessionTimer">Session: Checking...</div>
-                <button class="refresh-btn" onclick="location.reload()">
-                    <i class="fa fa-refresh"></i> Refresh App
-                </button>
-            </div>
+    <div id="main-app" style="display:none;">
+        <div class="main-container">
+            
+            <div class="header-controls">
+                <div class="session-timer" id="sessionTimer">Session: Checking...</div>
+                <button class="refresh-btn" onclick="location.reload()">
+                    <i class="fa fa-refresh"></i> Refresh App
+                </button>
+            </div>
 
-            <header class="app-header">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <i class="fa fa-database fa-2x"></i>
-                <h1 class="animated-title">AERO_206 to 216</h1>
-            </div>
-            <p style="margin: 5px 0 0 0;">Personalised Document Digitization Portal</p>
-        </header>
-        <div class="tabs">
-            <button class="tab-btn active" onclick="showTab('documents', event)"><i class="fa fa-file-text-o"></i> Documents</button>
-            <button class="tab-btn" onclick="showTab('status', event)"><i class="fa fa-bar-chart"></i> Dashboard</button>
-            <button class="tab-btn" onclick="showTab('tracking', event)"><i class="fa fa-search"></i> Tracking</button>
-        </div>
-        <div id="documents-tab" class="tab-content active">
-            <main class="form-card">
-                <form id="csvForm"></form>
-            </main>
-        </div>
-        <div id="status-tab" class="tab-content">
-            <div class="form-card">
-                <h3>Upload Status Dashboard</h3>
-                <div id="statusDashboard">
-                    <div id="statusFilter"></div>
-                    <div id="statusCounts"></div>
-                    <div id="statusTable"></div>
-                </div>
-            </div>
-        </div>
-       <div id="tracking-tab" class="tab-content">
-            <div class="form-card">
-                <h3>Document Tracking</h3>
-                <div id="trackingForm"></div>
-                <div id="trackingResults"></div>
-            </div>
-        </div>
-    </div> </div> <div id="confirmModal" class="modal" style="display:none;"></div>
+            <header class="app-header">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i class="fa fa-database fa-2x"></i>
+                    <h1 class="animated-title">AERO_206 to 216</h1>
+                </div>
+                <p style="margin: 5px 0 0 0;">Personalised Document Digitization Portal</p>
+            </header>
+            <div class="tabs">
+                <button class="tab-btn active" onclick="showTab('documents', event)"><i class="fa fa-file-text-o"></i> Documents</button>
+                <button class="tab-btn" onclick="showTab('status', event)"><i class="fa fa-bar-chart"></i> Dashboard</button>
+                <button class="tab-btn" onclick="showTab('tracking', event)"><i class="fa fa-search"></i> Tracking</button>
+            </div>
+            <div id="documents-tab" class="tab-content active">
+                <main class="form-card">
+                    <form id="csvForm"></form>
+                </main>
+            </div>
+            <div id="status-tab" class="tab-content">
+                <div class="form-card">
+                    <h3>Upload Status Dashboard</h3>
+                    <div id="statusDashboard">
+                        <div id="statusFilter"></div>
+                        <div id="statusCounts"></div>
+                        <div id="statusTable"></div>
+                    </div>
+                </div>
+            </div>
+            <div id="tracking-tab" class="tab-content">
+                <div class="form-card">
+                    <h3>Document Tracking</h3>
+                    <div id="trackingForm"></div>
+                    <div id="trackingResults"></div>
+                </div>
+            </div>
+        </div> 
+    </div> 
+    <div id="confirmModal" class="modal" style="display:none;"></div>
 </body>
 <script>
 const csvUrl="https://docs.google.com/spreadsheets/d/e/2PACX-1vTBuDewVgTDoc_zaWYQyaWKpBt0RwtFPhnBrpqr1v6Y5wfAmPpEYvTsaWd64bsHhH68iYNtLMSRpOQ0/pub?gid=979866094&single=true&output=csv";
@@ -202,849 +245,810 @@ let lastMemoryCheck = 0;
 const MEMORY_CHECK_INTERVAL = 1000;
 
 function shouldDelayCompression() {
-  const now = Date.now();
-  if (now - lastMemoryCheck < MEMORY_CHECK_INTERVAL && lastMemoryCheck !== 0) return false;
-  lastMemoryCheck = now;
-  if (compressionQueue.length > 3) return true;
-  return false;
+  const now = Date.now();
+  if (now - lastMemoryCheck < MEMORY_CHECK_INTERVAL && lastMemoryCheck !== 0) return false;
+  lastMemoryCheck = now;
+  if (compressionQueue.length > 3) return true;
+  return false;
 }
 
 // --- MODIFIED IMAGE FIELD FOR NATIVE CAMERA ---
 function createImageField(container, header, columnIndex) {
-  const wrapper = document.createElement('div');
-  
-  // 1. Capture Button
-  const btn = document.createElement('button');
-  btn.type = 'button';
-  btn.className = 'camera-btn';
-  btn.innerHTML = `<i class="fa fa-camera"></i> Capture ${header}`;
-  
-  // 2. Image Preview Element (New)
-  const imgPreview = document.createElement('img');
-  imgPreview.className = 'preview-img';
-  
-  // 3. Status Text
-  const status = document.createElement('span');
-  status.id = `status-${columnIndex}`;
-  status.style.fontSize = '14px';
-  status.style.display = 'block';
-  status.innerHTML = 'No photo';
-  status.style.color = '#e74c3c';
-  status.style.textAlign = 'center';
+  const wrapper = document.createElement('div');
+  
+  // 1. Capture Button
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'camera-btn';
+  btn.innerHTML = `<i class="fa fa-camera"></i> Capture ${header}`;
+  
+  // 2. Image Preview Element (New)
+  const imgPreview = document.createElement('img');
+  imgPreview.className = 'preview-img';
+  
+  // 3. Status Text
+  const status = document.createElement('span');
+  status.id = `status-${columnIndex}`;
+  status.style.fontSize = '14px';
+  status.style.display = 'block';
+  status.innerHTML = 'No photo';
+  status.style.color = '#e74c3c';
+  status.style.textAlign = 'center';
 
-  // 4. Clear Button
-  const clearBtn = document.createElement('button');
-  clearBtn.type = 'button';
-  clearBtn.textContent = 'Clear';
-  clearBtn.className = 'clear-btn';
-  clearBtn.style.display = 'none';
-  clearBtn.style.marginTop = '5px';
-  clearBtn.style.width = '100%';
+  // 4. Clear Button
+  const clearBtn = document.createElement('button');
+  clearBtn.type = 'button';
+  clearBtn.textContent = 'Clear';
+  clearBtn.className = 'clear-btn';
+  clearBtn.style.display = 'none';
+  clearBtn.style.marginTop = '5px';
+  clearBtn.style.width = '100%';
 
-  // 5. Hidden Input
-  const hiddenInput = document.createElement('input');
-  hiddenInput.type = 'file';
-  hiddenInput.id = `file-${columnIndex}`;
-  hiddenInput.style.display = 'none';
-  hiddenInput.accept = 'image/*';
+  // 5. Hidden Input
+  const hiddenInput = document.createElement('input');
+  hiddenInput.type = 'file';
+  hiddenInput.id = `file-${columnIndex}`;
+  hiddenInput.style.display = 'none';
+  hiddenInput.accept = 'image/*';
 
-  // --- LOGIC ---
-  btn.onclick = async () => {
-    if (typeof Capacitor === 'undefined' || !Capacitor.Plugins) {
-        alert("Camera Error: Native bridge not found."); return;
-    }
-    try {
-        const Camera = Capacitor.Plugins.Camera;
-        const image = await Camera.getPhoto({
-            quality: 90, allowEditing: false, resultType: 'uri', source: 'CAMERA', width: 1200
-        });
+  // --- LOGIC ---
+  btn.onclick = async () => {
+    if (typeof Capacitor === 'undefined' || !Capacitor.Plugins) {
+        alert("Camera Error: Native bridge not found."); return;
+    }
+    try {
+        const Camera = Capacitor.Plugins.Camera;
+        const image = await Camera.getPhoto({
+            quality: 90, allowEditing: false, resultType: 'uri', source: 'CAMERA', width: 1200
+        });
 
-        status.innerText = 'Processing...';
-        status.style.color = 'orange';
+        status.innerText = 'Processing...';
+        status.style.color = 'orange';
 
-        const response = await fetch(image.webPath);
-        const blob = await response.blob();
-        const file = new File([blob], `photo_${columnIndex}.jpg`, { type: "image/jpeg" });
+        const response = await fetch(image.webPath);
+        const blob = await response.blob();
+        const file = new File([blob], `photo_${columnIndex}.jpg`, { type: "image/jpeg" });
 
-        const dt = new DataTransfer();
-        dt.items.add(file);
-        hiddenInput.files = dt.files;
-        
-        // SHOW PREVIEW
-        imgPreview.src = URL.createObjectURL(file);
-        imgPreview.style.display = 'block';
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        hiddenInput.files = dt.files;
+        
+        // SHOW PREVIEW
+        imgPreview.src = URL.createObjectURL(file);
+        imgPreview.style.display = 'block';
 
-        await compressImageTo150KB(file, hiddenInput);
+        await compressImageTo150KB(file, hiddenInput);
 
-        status.innerHTML = '<i class="fa fa-check-circle"></i> Photo Captured'; 
-        status.style.color = '#28a745';
-        clearBtn.style.display = 'block';
-        btn.style.background = '#27ae60';
+        status.innerHTML = '<i class="fa fa-check-circle"></i> Photo Captured'; 
+        status.style.color = '#28a745';
+        clearBtn.style.display = 'block';
+        btn.style.background = '#27ae60';
 
-    } catch (e) {
-        console.warn('Camera failed', e);
-    }
-  };
+    } catch (e) {
+        console.warn('Camera failed', e);
+    }
+  };
 
-  clearBtn.onclick = function(){
-    hiddenInput.value = ''; 
-    hiddenInput.compressedFile = null; 
-    
-    // HIDE PREVIEW
-    imgPreview.style.display = 'none';
-    imgPreview.src = '';
-    
-    status.innerHTML = 'No photo'; 
-    status.style.color = '#e74c3c'; 
-    clearBtn.style.display = 'none';
-    btn.style.background = '#2c3e50';
-  };
+  clearBtn.onclick = function(){
+    hiddenInput.value = ''; 
+    hiddenInput.compressedFile = null; 
+    
+    // HIDE PREVIEW
+    imgPreview.style.display = 'none';
+    imgPreview.src = '';
+    
+    status.innerHTML = 'No photo'; 
+    status.style.color = '#e74c3c'; 
+    clearBtn.style.display = 'none';
+    btn.style.background = '#2c3e50';
+  };
 
-  wrapper.appendChild(btn);
-  wrapper.appendChild(imgPreview);
-  wrapper.appendChild(status);
-  wrapper.appendChild(clearBtn);
-  wrapper.appendChild(hiddenInput);
-  container.appendChild(wrapper);
+  wrapper.appendChild(btn);
+  wrapper.appendChild(imgPreview);
+  wrapper.appendChild(status);
+  wrapper.appendChild(clearBtn);
+  wrapper.appendChild(hiddenInput);
+  container.appendChild(wrapper);
 
-  if(header.toLowerCase().includes("other documents")){
-    const nameInp=document.createElement('input');
-    nameInp.type='text'; nameInp.id=`docname-${columnIndex}`; nameInp.placeholder="Document Name..."; nameInp.className='docname-input';
-    container.appendChild(nameInp);
-  }
+  if(header.toLowerCase().includes("other documents")){
+    const nameInp=document.createElement('input');
+    nameInp.type='text'; nameInp.id=`docname-${columnIndex}`; nameInp.placeholder="Document Name..."; nameInp.className='docname-input';
+    container.appendChild(nameInp);
+  }
 }
 // [ALL YOUR OTHER FUNCTIONS REMAIN EXACTLY THE SAME BELOW]
 async function loadCSVData(){
-  try{
-    const response=await fetch(csvUrl);
-    if(!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    const csvText=await response.text();
-    if(!csvText||csvText.trim()==='') throw new Error('CSV file is empty');
-    const lines=csvText.split('\n').filter(line=>line.trim()!=='');
-    if(lines.length===0) throw new Error('No data found in CSV');
-    headers=lines[0].split(',').map(header=>header.trim().replace(/^"|"$/g,''));
-    csvData=[];
-    for(let i=1;i<lines.length;i++){
-      const row=lines[i].split(',').map(cell=>cell.trim().replace(/^"|"$/g,''));
-      csvData.push(row);
-    }
-    createFormFields();
-  } catch(error){
-    console.error('Error loading CSV:',error);
-    form.innerHTML=`<p style="color: red;">Error loading CSV: ${error.message}</p>`;
-  }
+  try{
+    const response=await fetch(csvUrl);
+    if(!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    const csvText=await response.text();
+    if(!csvText||csvText.trim()==='') throw new Error('CSV file is empty');
+    const lines=csvText.split('\n').filter(line=>line.trim()!=='');
+    if(lines.length===0) throw new Error('No data found in CSV');
+    headers=lines[0].split(',').map(header=>header.trim().replace(/^"|"$/g,''));
+    csvData=[];
+    for(let i=1;i<lines.length;i++){
+      const row=lines[i].split(',').map(cell=>cell.trim().replace(/^"|"$/g,''));
+      csvData.push(row);
+    }
+    createFormFields();
+  } catch(error){
+    console.error('Error loading CSV:',error);
+    form.innerHTML=`<p style="color: red;">Error loading CSV: ${error.message}</p>`;
+  }
 }
 
 function createFormFields(){
-  const maxColumns=21;
-  limitedCSVData=csvData.slice(0,516);
-  limitedHeaders=headers.slice(0,maxColumns);
-  form.innerHTML='';
-  const displayOrder=[...dropdownSequence];
-  for(let i=0;i<limitedHeaders.length;i++){
-    if(!dropdownSequence.includes(i)&&i!==limitedHeaders.length-1) displayOrder.push(i);
-  }
-  displayOrder.push(limitedHeaders.length-1);
-  displayOrder.forEach((columnIndex,displayIndex)=>{
-    const header=limitedHeaders[columnIndex];
-    if(!header||columnIndex>=limitedHeaders.length) return;
-    const container=document.createElement('div');
-    container.className='form-field';
-    const label=document.createElement('label');
-    label.textContent=header+(mandatoryIndices.includes(columnIndex)?' *':'');
-    container.appendChild(label);
-    if(columnIndex===limitedHeaders.length-1){
-      const textarea=document.createElement('textarea');
-      textarea.name=header; textarea.rows=1; textarea.readOnly=true; textarea.className='datetime-field';
-      const now=new Date();
-      textarea.value=now.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+' '+now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',hour12:true}).toLowerCase();
-      container.appendChild(textarea);
-    } else if(dropdownSequence.includes(columnIndex)){
-      if(columnIndex===1) createSearchableDropdown(container,header,columnIndex);
-      else createRegularDropdown(container,header,columnIndex);
-    } else createImageField(container,header,columnIndex);
-    form.appendChild(container);
-  });
-  createSubmitButton(); setupFormSubmission();
+  const maxColumns=21;
+  limitedCSVData=csvData.slice(0,516);
+  limitedHeaders=headers.slice(0,maxColumns);
+  form.innerHTML='';
+  const displayOrder=[...dropdownSequence];
+  for(let i=0;i<limitedHeaders.length;i++){
+    if(!dropdownSequence.includes(i)&&i!==limitedHeaders.length-1) displayOrder.push(i);
+  }
+  displayOrder.push(limitedHeaders.length-1);
+  displayOrder.forEach((columnIndex,displayIndex)=>{
+    const header=limitedHeaders[columnIndex];
+    if(!header||columnIndex>=limitedHeaders.length) return;
+    const container=document.createElement('div');
+    container.className='form-field';
+    const label=document.createElement('label');
+    label.textContent=header+(mandatoryIndices.includes(columnIndex)?' *':'');
+    container.appendChild(label);
+    if(columnIndex===limitedHeaders.length-1){
+      const textarea=document.createElement('textarea');
+      textarea.name=header; textarea.rows=1; textarea.readOnly=true; textarea.className='datetime-field';
+      const now=new Date();
+      textarea.value=now.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+' '+now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',hour12:true}).toLowerCase();
+      container.appendChild(textarea);
+    } else if(dropdownSequence.includes(columnIndex)){
+      if(columnIndex===1) createSearchableDropdown(container,header,columnIndex);
+      else createRegularDropdown(container,header,columnIndex);
+    } else createImageField(container,header,columnIndex);
+    form.appendChild(container);
+  });
+  createSubmitButton(); setupFormSubmission();
 }
 
-function createSearchableDropdown(container, header, columnIndex) {
-  const wrapper = document.createElement('div');
-  wrapper.className = 'searchable-dropdown-wrapper';
-
-  // Error check
-  if (!limitedCSVData || limitedCSVData.length === 0) {
-    const errorMsg = document.createElement('p');
-    errorMsg.textContent = 'Data not loaded yet';
-    errorMsg.style.color = 'red';
-    container.appendChild(errorMsg);
-    return;
+function createSearchableDropdown(container,header,columnIndex){
+  const wrapper=document.createElement('div');
+  wrapper.className='searchable-dropdown-wrapper';
+  if(!limitedCSVData||limitedCSVData.length===0){
+    const errorMsg=document.createElement('p');
+    errorMsg.textContent='Data not loaded yet'; errorMsg.style.color='red';
+    container.appendChild(errorMsg); return;
   }
-
-  // 1. Create Input and Hidden Select
-  const searchInput = document.createElement('input');
-  searchInput.type = 'text';
-  searchInput.className = 'search-input';
-  searchInput.id = `search-${columnIndex}`;
-  searchInput.placeholder = `Search ${header}...`;
-
-  const select = document.createElement('select');
-  select.name = header;
-  select.id = `dropdown-${columnIndex}`;
-  select.required = mandatoryIndices.includes(columnIndex);
-  select.style.display = 'none';
-
-  // 2. Create Dropdown List Container (Defined BEFORE use to prevent crash)
-  const dropdownList = document.createElement('div');
-  dropdownList.className = 'dropdown-list';
-  dropdownList.style.display = 'none';
-
-  // 3. Add Default Option
-  const def = document.createElement('option');
-  def.value = "";
-  def.textContent = `-- Select ${header} --`;
-  select.appendChild(def);
-
-  // 4. Get Unique Values from CSV (Dynamic Logic for ALL columns, including Index 1)
-  const uniqueValues = [...new Set(limitedCSVData.map(row => row[columnIndex]))]
-    .filter(v => v) // Remove empty values
-    .sort((a, b) => {
-      // Numerical sort if possible, otherwise alphabetical
-      const numA = parseInt(a);
-      const numB = parseInt(b);
-      if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
-      return a.localeCompare(b);
-    });
-
-  // 5. Populate Options
-  uniqueValues.forEach(value => {
-    // Add to Hidden Select
-    const opt = document.createElement('option');
-    opt.value = value;
-    opt.textContent = value;
-    select.appendChild(opt);
-
-    // Add to Visual Dropdown List
-    const item = document.createElement('div');
-    item.className = 'dropdown-item';
-    item.textContent = value;
-    
-    item.onclick = () => {
-      select.value = value;
-      searchInput.value = value;
-      dropdownList.style.display = 'none';
-      updateNextDropdowns(columnIndex);
+  const searchInput=document.createElement('input');
+  searchInput.type='text'; searchInput.className='search-input'; searchInput.id=`search-${columnIndex}`;
+  const select=document.createElement('select');
+  select.name=header; select.id=`dropdown-${columnIndex}`; select.required=mandatoryIndices.includes(columnIndex); select.style.display='none';
+  if(columnIndex===1){
+    searchInput.value="208"; searchInput.readOnly=true; searchInput.style.backgroundColor='#f0f0f0';
+    select.innerHTML=`<option value="208">208</option>`; select.value="208";
+    setTimeout(()=>updateNextDropdowns(1),300);
+  } else{
+    searchInput.placeholder=`Search ${header}...`;
+    const def=document.createElement('option'); def.value=""; def.textContent=`-- Select ${header} --`; select.appendChild(def);
+  }
+  const dropdownList=document.createElement('div');
+  dropdownList.className='dropdown-list'; dropdownList.style.display='none';
+  const uniqueValues=[...new Set(limitedCSVData.map(row=>row[columnIndex]))].filter(v=>v).sort();
+  uniqueValues.forEach(value=>{
+    const opt=document.createElement('option'); opt.value=value; opt.textContent=value;
+    if(columnIndex!==1) select.appendChild(opt);
+    const item=document.createElement('div'); item.className='dropdown-item'; item.textContent=value;
+    item.onclick=()=>{
+      if(columnIndex===1) return;
+      select.value=value; searchInput.value=value; dropdownList.style.display='none'; updateNextDropdowns(columnIndex);
     };
     dropdownList.appendChild(item);
   });
-
-  // 6. Search Functionality
-  searchInput.onfocus = () => {
-    dropdownList.style.display = 'block';
-  };
-  
-  searchInput.oninput = function() {
-    const term = this.value.toLowerCase();
-    dropdownList.querySelectorAll('.dropdown-item').forEach(item => {
-      item.style.display = item.textContent.toLowerCase().includes(term) ? 'block' : 'none';
-    });
-  };
-
-  // 7. Close on Click Outside
-  document.addEventListener('click', (e) => {
-    if (!wrapper.contains(e.target)) {
-      dropdownList.style.display = 'none';
-    }
-  });
-
-  // 8. Append Elements
-  wrapper.appendChild(searchInput);
-  wrapper.appendChild(select);
-  wrapper.appendChild(dropdownList);
+  if(columnIndex!==1){
+    searchInput.onfocus=()=>{ dropdownList.style.display='block'; };
+    searchInput.oninput=function(){
+      const term=this.value.toLowerCase();
+      dropdownList.querySelectorAll('.dropdown-item').forEach(item=>{
+        item.style.display=item.textContent.toLowerCase().includes(term)?'block':'none';
+      });
+    };
+  }
+  document.addEventListener('click',(e)=>{ if(!wrapper.contains(e.target)) dropdownList.style.display='none'; });
+  wrapper.appendChild(searchInput); wrapper.appendChild(select); wrapper.appendChild(dropdownList);
   container.appendChild(wrapper);
 }
 
 function createRegularDropdown(container,header,columnIndex){
-  const select=document.createElement('select');
-  select.name=header; select.id=`dropdown-${columnIndex}`; select.required=mandatoryIndices.includes(columnIndex); select.className='dropdown-select'; select.disabled=true;
-  select.innerHTML=`<option value="">-- Select ${header} --</option>`; select.onchange=()=>updateNextDropdowns(columnIndex);
-  container.appendChild(select);
+  const select=document.createElement('select');
+  select.name=header; select.id=`dropdown-${columnIndex}`; select.required=mandatoryIndices.includes(columnIndex); select.className='dropdown-select'; select.disabled=true;
+  select.innerHTML=`<option value="">-- Select ${header} --</option>`; select.onchange=()=>updateNextDropdowns(columnIndex);
+  container.appendChild(select);
 }
 
 function updateNextDropdowns(currentCol){
-  const seqIdx=dropdownSequence.indexOf(currentCol);
-  if(seqIdx===-1||seqIdx===dropdownSequence.length-1) return;
-  const nextCol=dropdownSequence[seqIdx+1];
-  const nextSelect=document.getElementById(`dropdown-${nextCol}`);
-  for(let i=seqIdx+1;i<dropdownSequence.length;i++){
-    const s=document.getElementById(`dropdown-${dropdownSequence[i]}`);
-    if(s){ s.innerHTML=`<option value="">-- Select ${headers[dropdownSequence[i]]} --</option>`; s.disabled=true; }
-  }
-  const filters={};
-  for(let i=0;i<=seqIdx;i++){
-    const c=dropdownSequence[i];
-    filters[c]=document.getElementById(`dropdown-${c}`).value;
-  }
-  const filteredRows=limitedCSVData.filter(row=>Object.keys(filters).every(k=>row[k]===filters[k]));
-  const nextVals=[...new Set(filteredRows.map(row=>row[nextCol]))].filter(v=>v).sort((a,b)=>{
-    const numA=parseInt(a),numB=parseInt(b);
-    if(!isNaN(numA)&&!isNaN(numB)) return numA-numB;
-    return a.localeCompare(b);
-  });
-  if(nextVals.length>0){
-    nextSelect.disabled=false;
-    nextVals.forEach(v=>{
-      const o=document.createElement('option'); o.value=v; o.textContent=v; nextSelect.appendChild(o);
-    });
-    if(nextVals.length===1){ nextSelect.value=nextVals[0]; updateNextDropdowns(nextCol); }
-  }
+  const seqIdx=dropdownSequence.indexOf(currentCol);
+  if(seqIdx===-1||seqIdx===dropdownSequence.length-1) return;
+  const nextCol=dropdownSequence[seqIdx+1];
+  const nextSelect=document.getElementById(`dropdown-${nextCol}`);
+  for(let i=seqIdx+1;i<dropdownSequence.length;i++){
+    const s=document.getElementById(`dropdown-${dropdownSequence[i]}`);
+    if(s){ s.innerHTML=`<option value="">-- Select ${headers[dropdownSequence[i]]} --</option>`; s.disabled=true; }
+  }
+  const filters={};
+  for(let i=0;i<=seqIdx;i++){
+    const c=dropdownSequence[i];
+    filters[c]=document.getElementById(`dropdown-${c}`).value;
+  }
+  const filteredRows=limitedCSVData.filter(row=>Object.keys(filters).every(k=>row[k]===filters[k]));
+  const nextVals=[...new Set(filteredRows.map(row=>row[nextCol]))].filter(v=>v).sort((a,b)=>{
+    const numA=parseInt(a),numB=parseInt(b);
+    if(!isNaN(numA)&&!isNaN(numB)) return numA-numB;
+    return a.localeCompare(b);
+  });
+  if(nextVals.length>0){
+    nextSelect.disabled=false;
+    nextVals.forEach(v=>{
+      const o=document.createElement('option'); o.value=v; o.textContent=v; nextSelect.appendChild(o);
+    });
+    if(nextVals.length===1){ nextSelect.value=nextVals[0]; updateNextDropdowns(nextCol); }
+  }
 }
 
 function createSubmitButton(){
-  const btn=document.createElement('button');
-  btn.type='submit'; btn.textContent='Submit'; btn.className='submit-btn'; btn.id='mainSubmitBtn';
-  form.appendChild(btn);
+  const btn=document.createElement('button');
+  btn.type='submit'; btn.textContent='Submit'; btn.className='submit-btn'; btn.id='mainSubmitBtn';
+  form.appendChild(btn);
 }
 function setupFormSubmission(){
-  form.onsubmit=(e)=>{
-    e.preventDefault();
-    
-    // 1. Validate Dropdown 3 (Elector) specifically
-    const dropdown3=document.getElementById('dropdown-3');
-    if(!dropdown3||!dropdown3.value){ 
-      alert("Please select the Elector before submitting"); 
-      return; 
-    }
-    let missingMandatory = false;
-    
-    mandatoryIndices.forEach(idx => {
-        // Check for Dropdown
-        const drop = document.getElementById(`dropdown-${idx}`);
-        if(drop && !drop.value) missingMandatory = true;
+  form.onsubmit=(e)=>{
+    e.preventDefault();
+    
+    // 1. Validate Dropdown 3 (Elector) specifically
+    const dropdown3=document.getElementById('dropdown-3');
+    if(!dropdown3||!dropdown3.value){ 
+      alert("Please select the Elector before submitting"); 
+      return; 
+    }
+    let missingMandatory = false;
+    
+    mandatoryIndices.forEach(idx => {
+        // Check for Dropdown
+        const drop = document.getElementById(`dropdown-${idx}`);
+        if(drop && !drop.value) missingMandatory = true;
 
-        // Check for File Input
-        const fileInp = document.getElementById(`file-${idx}`);
-        if(fileInp && fileInp.files.length === 0 && !fileInp.compressedFile) missingMandatory = true;
-    });
+        // Check for File Input
+        const fileInp = document.getElementById(`file-${idx}`);
+        if(fileInp && fileInp.files.length === 0 && !fileInp.compressedFile) missingMandatory = true;
+    });
 
-    if(missingMandatory){ 
-      alert("Please complete all Mandatory fields (marked with *) including required Photos."); 
-      return; 
-    }
-    const modal = document.getElementById('confirmModal');
-    modal.innerHTML = `
-      <div class="modal-content">
-        <div class="modal-header" style="text-align: center;">
-          <h3 style="margin: 0; color: #2c3e50;">Processing Images...</h3>
-          <p style="color: #7f8c8d; margin: 5px 0 0 0; font-size: 14px;" id="statusMsg">Optimizing for fast upload</p>
-        </div>
-        
-        <div class="modal-body" style="background: #f8f9fa; border-radius: 8px; margin: 15px 0;">
-           <div style="padding: 10px; border-bottom: 1px solid #ddd;">
-             <strong>Elector:</strong> ${dropdown3.value}
-           </div>
-        </div>
-        
-        <div class="documents-list" style="max-height: 200px; overflow-y: auto; margin: 15px 0; background: white; border: 1px solid #eee;">
-          <ul id="uploadSummary" style="list-style: none; padding: 0; margin: 0;"></ul>
-        </div>
-        
-        <div class="modal-footer" style="display: flex; gap: 10px; margin-top: 20px;">
-          <button id="confirmUploadBtn" disabled style="flex: 1; padding: 10px; background: #95a5a6; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: not-allowed; opacity: 0.7;">
-            <i class="fa fa-spinner fa-spin"></i> Please Wait...
-          </button>
-          <button id="cancelUploadBtn" class="cancel-btn" style="flex: 1; padding: 10px; background: #e74c3c; color: white; border: none; border-radius: 6px; cursor: pointer;">
-            Cancel
-          </button>
-        </div>
-      </div>
-    `;
+    if(missingMandatory){ 
+      alert("Please complete all Mandatory fields (marked with *) including required Photos."); 
+      return; 
+    }
+    const modal = document.getElementById('confirmModal');
+    modal.innerHTML = `
+      <div class="modal-content">
+        <div class="modal-header" style="text-align: center;">
+          <h3 style="margin: 0; color: #2c3e50;">Processing Images...</h3>
+          <p style="color: #7f8c8d; margin: 5px 0 0 0; font-size: 14px;" id="statusMsg">Optimizing for fast upload</p>
+        </div>
+        
+        <div class="modal-body" style="background: #f8f9fa; border-radius: 8px; margin: 15px 0;">
+           <div style="padding: 10px; border-bottom: 1px solid #ddd;">
+             <strong>Elector:</strong> ${dropdown3.value}
+           </div>
+        </div>
+        
+        <div class="documents-list" style="max-height: 200px; overflow-y: auto; margin: 15px 0; background: white; border: 1px solid #eee;">
+          <ul id="uploadSummary" style="list-style: none; padding: 0; margin: 0;"></ul>
+        </div>
+        
+        <div class="modal-footer" style="display: flex; gap: 10px; margin-top: 20px;">
+          <button id="confirmUploadBtn" disabled style="flex: 1; padding: 10px; background: #95a5a6; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: not-allowed; opacity: 0.7;">
+            <i class="fa fa-spinner fa-spin"></i> Please Wait...
+          </button>
+          <button id="cancelUploadBtn" class="cancel-btn" style="flex: 1; padding: 10px; background: #e74c3c; color: white; border: none; border-radius: 6px; cursor: pointer;">
+            Cancel
+          </button>
+        </div>
+      </div>
+    `;
 
-    modal.style.display='flex';
-    
-    const confirmBtn = document.getElementById('confirmUploadBtn');
-    const cancelBtn = document.getElementById('cancelUploadBtn');
-    const summaryList = document.getElementById('uploadSummary');
-    const statusMsg = document.getElementById('statusMsg');
-    const checkInterval = setInterval(() => {
-      let allReady = true;
-      let anyError = false;
-      let pendingCount = 0;
-      summaryList.innerHTML = ''; 
-      
-      limitedHeaders.forEach((h,i)=>{
-        const f = document.getElementById(`file-${i}`);
-        if(f && f.files.length > 0) {
-          const li = document.createElement('li');
-          li.style.padding = '8px';
-          li.style.borderBottom = '1px solid #f0f0f0';
-          li.style.display = 'flex';
-          li.style.alignItems = 'center';
-          li.style.justifyContent = 'space-between';
-          
-          let icon = '';
-          let color = '#333';
-          
-          if (f.compressedFile) {
-             icon = '<i class="fa fa-check-circle" style="color: #2ecc71;"></i>';
-             li.style.background = '#fafffa';
-          } else if (f.compressionFailed) {
-             icon = '<i class="fa fa-exclamation-triangle" style="color: #e74c3c;"></i>';
-             color = '#e74c3c';
-             allReady = false;
-             anyError = true;
-             li.style.background = '#fff0f0';
-          } else {
-             icon = '<i class="fa fa-spinner fa-spin" style="color: #3498db;"></i>';
-             allReady = false;
-             pendingCount++;
-          }
-          
-          li.innerHTML = `<span style="color:${color}; font-size:14px;">${h}</span> ${icon}`;
-          summaryList.appendChild(li);
-        }
-      });
-      if (allReady) {
-        confirmBtn.disabled = false;
-        confirmBtn.style.background = 'linear-gradient(135deg, #2ecc71, #27ae60)';
-        confirmBtn.style.cursor = 'pointer';
-        confirmBtn.style.opacity = '1';
-        confirmBtn.innerHTML = '<i class="fa fa-cloud-upload"></i>Upload';
-        let successCount = 0;
-        limitedHeaders.forEach((h,i)=>{
-             const f = document.getElementById(`file-${i}`);
-             if(f && (f.compressedFile || (f.files && f.files.length > 0))) successCount++;
-        });
-        statusMsg.textContent = `${successCount} Image(s) optimized and ready.`;
-        statusMsg.style.color = "#27ae60";
-        clearInterval(checkInterval); 
-      } else if (anyError) {
-        confirmBtn.innerHTML = '<i class="fa fa-exclamation-circle"></i> Fix Errors';
-        statusMsg.textContent = "Some images failed to optimize. Please re-select them.";
-        statusMsg.style.color = "#e74c3c";
-      } else {
-        statusMsg.textContent = `Optimizing... ${pendingCount} remaining`;
-      }
-      
-    }, 500);
-    confirmBtn.onclick = () => {
-        clearInterval(checkInterval);
-        finalSubmit();
-    };
-    
-    cancelBtn.onclick = () => {
-      clearInterval(checkInterval);
-      modal.style.display = 'none';
-    };
-  };
-  window.finalSubmit=async function(){
-    const modal = document.getElementById('confirmModal');
-    const modalContent = modal.querySelector('.modal-content');
-    let seconds=30;
-    modalContent.innerHTML=`<div style="text-align:center;padding:20px;"><h3>Uploading...</h3><div class="timer-display" id="timer">30</div><p>seconds remaining</p><div class="progress-container"><div class="progress-bar" id="progressBar"></div></div><div class="upload-status" id="uploadStatus">Preparing upload...</div></div>`;
-    
-    const timerInterval=setInterval(()=>{
-      seconds--;
-      if(document.getElementById('timer')){
-        document.getElementById('timer').textContent=seconds;
-        const progress=((30-seconds)/30)*100;
-        document.getElementById('progressBar').style.width=progress+'%';
-        document.getElementById('uploadStatus').textContent=`Uploading... ${Math.round(progress)}% complete`;
-      }
-      if(seconds<=0) clearInterval(timerInterval);
-    },1000);
-    
-    try{
-      const payload={}; 
-      const totalFields=headers.length; 
-      let processedFields=0;
-      
-      for(let i=0;i<totalFields;i++){
-        const h=headers[i];
-        const drop=document.getElementById(`dropdown-${i}`);
-        const fileInp=document.getElementById(`file-${i}`);
-        const txt=form.querySelector(`textarea[name="${h}"]`);
-        
-        if(drop) payload[h]=drop.value;
-        else if(txt) payload[h]=txt.value;
-        else if(fileInp&&(fileInp.compressedFile||fileInp.files[0])){
-          const file=fileInp.compressedFile||fileInp.files[0];
-          const b64=await fileToBase64(file);
-          const nInp=document.getElementById(`docname-${i}`);
-          payload[h]=nInp&&nInp.value.trim()!==""?`${b64}|${nInp.value.trim()}`:b64;
-        }
-        
-        processedFields++;
-        const progressPercent=(processedFields/totalFields)*50;
-        document.getElementById('progressBar').style.width=progressPercent+'%';
-        document.getElementById('uploadStatus').textContent=`Processing data... ${Math.round(progressPercent)}%`;
-      }
-      
-      compressionQueue=[];
-      isCompressing=false;
-      
-      document.getElementById('uploadStatus').textContent='Sending to server...';
-      await fetch('https://script.google.com/macros/s/AKfycbzln6bsC6nVnjc0NR88jz0J_d6v-ZuCgGPj1ec1y82OHGf8-JDGjrr3kukrsJhGBwEJIw/exec',{
-        method:'POST',
-        mode:'no-cors',
-        body:JSON.stringify(payload)
-      });
-      
-      document.getElementById('progressBar').style.width='100%'; 
-      document.getElementById('uploadStatus').textContent='Upload complete!';
-      clearInterval(timerInterval);
-      
-      setTimeout(()=>{ 
-        alert("Success!"); 
-        location.reload(); 
-      },1000);
-      
-    } catch(err){
-      document.getElementById('uploadStatus').textContent='Upload failed!'; 
-      document.getElementById('progressBar').style.background='#ff4444';
-      clearInterval(timerInterval);
-      
-      setTimeout(()=>{ 
-        alert("Error: "+err.message); 
-        location.reload(); 
-      },100);
-    }
-  };
+    modal.style.display='flex';
+    
+    const confirmBtn = document.getElementById('confirmUploadBtn');
+    const cancelBtn = document.getElementById('cancelUploadBtn');
+    const summaryList = document.getElementById('uploadSummary');
+    const statusMsg = document.getElementById('statusMsg');
+    const checkInterval = setInterval(() => {
+      let allReady = true;
+      let anyError = false;
+      let pendingCount = 0;
+      summaryList.innerHTML = ''; 
+      
+      limitedHeaders.forEach((h,i)=>{
+        const f = document.getElementById(`file-${i}`);
+        if(f && f.files.length > 0) {
+          const li = document.createElement('li');
+          li.style.padding = '8px';
+          li.style.borderBottom = '1px solid #f0f0f0';
+          li.style.display = 'flex';
+          li.style.alignItems = 'center';
+          li.style.justifyContent = 'space-between';
+          
+          let icon = '';
+          let color = '#333';
+          
+          if (f.compressedFile) {
+             icon = '<i class="fa fa-check-circle" style="color: #2ecc71;"></i>';
+             li.style.background = '#fafffa';
+          } else if (f.compressionFailed) {
+             icon = '<i class="fa fa-exclamation-triangle" style="color: #e74c3c;"></i>';
+             color = '#e74c3c';
+             allReady = false;
+             anyError = true;
+             li.style.background = '#fff0f0';
+          } else {
+             icon = '<i class="fa fa-spinner fa-spin" style="color: #3498db;"></i>';
+             allReady = false;
+             pendingCount++;
+          }
+          
+          li.innerHTML = `<span style="color:${color}; font-size:14px;">${h}</span> ${icon}`;
+          summaryList.appendChild(li);
+        }
+      });
+      if (allReady) {
+        confirmBtn.disabled = false;
+        confirmBtn.style.background = 'linear-gradient(135deg, #2ecc71, #27ae60)';
+        confirmBtn.style.cursor = 'pointer';
+        confirmBtn.style.opacity = '1';
+        confirmBtn.innerHTML = '<i class="fa fa-cloud-upload"></i>Upload';
+        let successCount = 0;
+        limitedHeaders.forEach((h,i)=>{
+             const f = document.getElementById(`file-${i}`);
+             if(f && (f.compressedFile || (f.files && f.files.length > 0))) successCount++;
+        });
+        statusMsg.textContent = `${successCount} Image(s) optimized and ready.`;
+        statusMsg.style.color = "#27ae60";
+        clearInterval(checkInterval); 
+      } else if (anyError) {
+        confirmBtn.innerHTML = '<i class="fa fa-exclamation-circle"></i> Fix Errors';
+        statusMsg.textContent = "Some images failed to optimize. Please re-select them.";
+        statusMsg.style.color = "#e74c3c";
+      } else {
+        statusMsg.textContent = `Optimizing... ${pendingCount} remaining`;
+      }
+      
+    }, 500);
+    confirmBtn.onclick = () => {
+        clearInterval(checkInterval);
+        finalSubmit();
+    };
+    
+    cancelBtn.onclick = () => {
+      clearInterval(checkInterval);
+      modal.style.display = 'none';
+    };
+  };
+  window.finalSubmit=async function(){
+    const modal = document.getElementById('confirmModal');
+    const modalContent = modal.querySelector('.modal-content');
+    let seconds=30;
+    modalContent.innerHTML=`<div style="text-align:center;padding:20px;"><h3>Uploading...</h3><div class="timer-display" id="timer">30</div><p>seconds remaining</p><div class="progress-container"><div class="progress-bar" id="progressBar"></div></div><div class="upload-status" id="uploadStatus">Preparing upload...</div></div>`;
+    
+    const timerInterval=setInterval(()=>{
+      seconds--;
+      if(document.getElementById('timer')){
+        document.getElementById('timer').textContent=seconds;
+        const progress=((30-seconds)/30)*100;
+        document.getElementById('progressBar').style.width=progress+'%';
+        document.getElementById('uploadStatus').textContent=`Uploading... ${Math.round(progress)}% complete`;
+      }
+      if(seconds<=0) clearInterval(timerInterval);
+    },1000);
+    
+    try{
+      const payload={}; 
+      const totalFields=headers.length; 
+      let processedFields=0;
+      
+      for(let i=0;i<totalFields;i++){
+        const h=headers[i];
+        const drop=document.getElementById(`dropdown-${i}`);
+        const fileInp=document.getElementById(`file-${i}`);
+        const txt=form.querySelector(`textarea[name="${h}"]`);
+        
+        if(drop) payload[h]=drop.value;
+        else if(txt) payload[h]=txt.value;
+        else if(fileInp&&(fileInp.compressedFile||fileInp.files[0])){
+          const file=fileInp.compressedFile||fileInp.files[0];
+          const b64=await fileToBase64(file);
+          const nInp=document.getElementById(`docname-${i}`);
+          payload[h]=nInp&&nInp.value.trim()!==""?`${b64}|${nInp.value.trim()}`:b64;
+        }
+        
+        processedFields++;
+        const progressPercent=(processedFields/totalFields)*50;
+        document.getElementById('progressBar').style.width=progressPercent+'%';
+        document.getElementById('uploadStatus').textContent=`Processing data... ${Math.round(progressPercent)}%`;
+      }
+      
+      compressionQueue=[];
+      isCompressing=false;
+      
+      document.getElementById('uploadStatus').textContent='Sending to server...';
+      const scriptUrls = [
+          'https://script.google.com/macros/s/AKfycbxWFPwah8jBC6RK13Yduk24r5W1Y1yn-OiyIIJSZsTmFiaFvh5o0ILZF1LTtLOsZVfyNQ/exec',
+          'https://script.google.com/macros/s/AKfycbxWFPwah8jBC6RK13Yduk24r5W1Y1yn-OiyIIJSZsTmFiaFvh5o0ILZF1LTtLOsZVfyNQ/exec', 
+          'https://script.google.com/macros/s/AKfycbxWFPwah8jBC6RK13Yduk24r5W1Y1yn-OiyIIJSZsTmFiaFvh5o0ILZF1LTtLOsZVfyNQ/exec', 
+          'https://script.google.com/macros/s/AKfycbxWFPwah8jBC6RK13Yduk24r5W1Y1yn-OiyIIJSZsTmFiaFvh5o0ILZF1LTtLOsZVfyNQ/exec', 
+          'https://script.google.com/macros/s/AKfycbxWFPwah8jBC6RK13Yduk24r5W1Y1yn-OiyIIJSZsTmFiaFvh5o0ILZF1LTtLOsZVfyNQ/exec'  
+      ];
+      
+      const randomUrl = scriptUrls[Math.floor(Math.random() * scriptUrls.length)];
+      
+      await fetch(randomUrl, {
+        method:'POST',
+        mode:'no-cors',
+        body:JSON.stringify(payload)
+      });
+      
+      document.getElementById('progressBar').style.width='100%'; 
+      document.getElementById('uploadStatus').textContent='Upload complete!';
+      clearInterval(timerInterval);
+      
+      setTimeout(()=>{ 
+        alert("Success!"); 
+        location.reload(); 
+      },1000);
+      
+    } catch(err){
+      document.getElementById('uploadStatus').textContent='Upload failed!'; 
+      document.getElementById('progressBar').style.background='#ff4444';
+      clearInterval(timerInterval);
+      
+      setTimeout(()=>{ 
+        alert("Error: "+err.message); 
+        location.reload(); 
+      },100);
+    }
+  };
 }
 
 // ... [Tracking and Status Functions Preserved Below] ...
 function createStatusDashboard(){
-  const statusFilter = document.getElementById('statusFilter');
-  const statusTable = document.getElementById('statusTable');
-  const statusCounts = document.getElementById('statusCounts');
-  
-  if(!statusFilter || !statusTable || !statusCounts){
-    console.error('Status dashboard elements not found!');
-    return;
-  }
-  
-  console.log('Creating status dashboard with', limitedCSVData.length, 'rows');
-  
-  statusFilter.innerHTML = '';
-  statusTable.innerHTML = '';
-  statusCounts.innerHTML = '';
-  
-  // Create filter container
-  const filterContainer = document.createElement('div');
-  filterContainer.className = 'status-filter-container';
-  
-  const filterLabel = document.createElement('label');
-  filterLabel.textContent = headers[1] + ' Filter: ';
-  filterLabel.htmlFor = 'statusFilterDropdown';
-  
-  const filterSelect = document.createElement('select');
-  filterSelect.id = 'statusFilterDropdown';
-  filterSelect.className = 'status-filter-dropdown';
-  
-  const selectOption = document.createElement('option');
-  selectOption.value = '';
-  selectOption.textContent = '-- Select ' + headers[1] + ' --';
-  filterSelect.appendChild(selectOption);
-  
-  const uniqueValues = [...new Set(limitedCSVData.map(row => row[1]))].filter(v => v).sort();
-  uniqueValues.forEach(value => {
-    const option = document.createElement('option');
-    option.value = value;
-    option.textContent = value;
-    filterSelect.appendChild(option);
-  });
-  
-  filterContainer.appendChild(filterLabel);
-  filterContainer.appendChild(filterSelect);
-  statusFilter.appendChild(filterContainer);
-  updateStatusCountsOnly('');
-  statusTable.innerHTML = '<div class="no-selection-message"><i class="fa fa-filter"></i> Please select a value from the dropdown above to view data</div>';
-  
-  filterSelect.addEventListener('change', () => {
-    if(filterSelect.value) {
-      updateStatusTable(filterSelect.value);
-    } else {
-      updateStatusCountsOnly('');
-      statusTable.innerHTML = '<div class="no-selection-message"><i class="fa fa-filter"></i> Please select a value from the dropdown above to view data</div>';
-    }
-  });
+  const statusFilter = document.getElementById('statusFilter');
+  const statusTable = document.getElementById('statusTable');
+  const statusCounts = document.getElementById('statusCounts');
+  
+  if(!statusFilter || !statusTable || !statusCounts){
+    console.error('Status dashboard elements not found!');
+    return;
+  }
+  
+  console.log('Creating status dashboard with', limitedCSVData.length, 'rows');
+  
+  statusFilter.innerHTML = '';
+  statusTable.innerHTML = '';
+  statusCounts.innerHTML = '';
+  
+  // Create filter container
+  const filterContainer = document.createElement('div');
+  filterContainer.className = 'status-filter-container';
+  
+  const filterLabel = document.createElement('label');
+  filterLabel.textContent = headers[1] + ' Filter: ';
+  filterLabel.htmlFor = 'statusFilterDropdown';
+  
+  const filterSelect = document.createElement('select');
+  filterSelect.id = 'statusFilterDropdown';
+  filterSelect.className = 'status-filter-dropdown';
+  
+  const selectOption = document.createElement('option');
+  selectOption.value = '';
+  selectOption.textContent = '-- Select ' + headers[1] + ' --';
+  filterSelect.appendChild(selectOption);
+  
+  const uniqueValues = [...new Set(limitedCSVData.map(row => row[1]))].filter(v => v).sort();
+  uniqueValues.forEach(value => {
+    const option = document.createElement('option');
+    option.value = value;
+    option.textContent = value;
+    filterSelect.appendChild(option);
+  });
+  
+  filterContainer.appendChild(filterLabel);
+  filterContainer.appendChild(filterSelect);
+  statusFilter.appendChild(filterContainer);
+  updateStatusCountsOnly('');
+  statusTable.innerHTML = '<div class="no-selection-message"><i class="fa fa-filter"></i> Please select a value from the dropdown above to view data</div>';
+  
+  filterSelect.addEventListener('change', () => {
+    if(filterSelect.value) {
+      updateStatusTable(filterSelect.value);
+    } else {
+      updateStatusCountsOnly('');
+      statusTable.innerHTML = '<div class="no-selection-message"><i class="fa fa-filter"></i> Please select a value from the dropdown above to view data</div>';
+    }
+  });
 }
 
 function updateStatusCountsOnly(filterValue) {
-  const statusCounts = document.getElementById('statusCounts');
-  if(!statusCounts) return;
-  
-  let filteredRows = limitedCSVData;
-  if(filterValue) {
-    filteredRows = limitedCSVData.filter(row => row[1] === filterValue);
-  }
-  
-  const uniqueCol3 = new Set();
-  const col21Status = { VERIFIED: 0, REJECTED: 0 };
-  let col20FilledCount = 0;
-  let col22FilledCount = 0;
-  
-  filteredRows.forEach(row => {
-    const val3 = row[3] || '';
-    if(val3.trim() !== '') uniqueCol3.add(val3);
-    
-    const val20 = row[20] || '';
-    if(val20.trim() !== '') col20FilledCount++;
-    
-    const val21 = row[21] || '';
-    if(val21.trim() !== ''){
-      if(val21.startsWith('VERIFIED_')) col21Status.VERIFIED++;
-      else if(val21.startsWith('REJECTED:')) col21Status.REJECTED++;
-    }
-    
-    const val22 = row[22] || '';
-    if(val22.trim() !== '') col22FilledCount++;
-  });
-  
-  // Build status counts HTML
-  let countsHTML = '<div class="status-counts-container">';
-  countsHTML += `<div class="count-box"><strong>${headers[3]}:</strong> ${uniqueCol3.size}</div>`;
-  countsHTML += `<div class="count-box"><strong>Received:</strong> ${col20FilledCount}</div>`;
-  countsHTML += `<div class="count-box"><strong>${headers[21]}:</strong> VERIFIED: ${col21Status.VERIFIED} | REJECTED: ${col21Status.REJECTED}</div>`;
-  if(headers[22]) {
-    countsHTML += `<div class="count-box"><strong>${headers[22]}:</strong> ${col22FilledCount}</div>`;
-  }
-  
-  countsHTML += '</div>';
-  statusCounts.innerHTML = countsHTML;
+  const statusCounts = document.getElementById('statusCounts');
+  if(!statusCounts) return;
+  
+  let filteredRows = limitedCSVData;
+  if(filterValue) {
+    filteredRows = limitedCSVData.filter(row => row[1] === filterValue);
+  }
+  
+  const uniqueCol3 = new Set();
+  const col21Status = { VERIFIED: 0, REJECTED: 0 };
+  let col20FilledCount = 0;
+  let col22FilledCount = 0;
+  
+  filteredRows.forEach(row => {
+    const val3 = row[3] || '';
+    if(val3.trim() !== '') uniqueCol3.add(val3);
+    
+    const val20 = row[20] || '';
+    if(val20.trim() !== '') col20FilledCount++;
+    
+    const val21 = row[21] || '';
+    if(val21.trim() !== ''){
+      if(val21.startsWith('VERIFIED_')) col21Status.VERIFIED++;
+      else if(val21.startsWith('REJECTED:')) col21Status.REJECTED++;
+    }
+    
+    const val22 = row[22] || '';
+    if(val22.trim() !== '') col22FilledCount++;
+  });
+  
+  // Build status counts HTML
+  let countsHTML = '<div class="status-counts-container">';
+  countsHTML += `<div class="count-box"><strong>${headers[3]}:</strong> ${uniqueCol3.size}</div>`;
+  countsHTML += `<div class="count-box"><strong>Received:</strong> ${col20FilledCount}</div>`;
+  countsHTML += `<div class="count-box"><strong>${headers[21]}:</strong> VERIFIED: ${col21Status.VERIFIED} | REJECTED: ${col21Status.REJECTED}</div>`;
+  if(headers[22]) {
+    countsHTML += `<div class="count-box"><strong>${headers[22]}:</strong> ${col22FilledCount}</div>`;
+  }
+  
+  countsHTML += '</div>';
+  statusCounts.innerHTML = countsHTML;
 }
 
 function updateStatusTable(filterValue){
-  const statusTable = document.getElementById('statusTable');
-  const statusCounts = document.getElementById('statusCounts');
-  if(!statusTable || !statusCounts) return;
-  
-  let filteredRows = limitedCSVData;
-  if(filterValue) {
-    filteredRows = limitedCSVData.filter(row => row[1] === filterValue);
-  }
-  
-  updateStatusCountsOnly(filterValue);
-  
-  let tableHTML = '<div class="status-table-container"><table class="status-table"><thead><tr>';
-  tableHTML += `<th>${headers[3]}</th>`;
-  tableHTML += `<th>${headers[20]}</th>`;
-  tableHTML += `<th>${headers[21]}</th>`;
-  tableHTML += `<th>${headers[22]}</th>`;
-  tableHTML += '</tr></thead><tbody>';
-  
-  filteredRows.forEach(row => {
-  const serialNo = row[2] || '';
-  const name = row[3] || '';
-  const nameWithSerial = serialNo ? `${serialNo}. ${name}` : name;
-  const col20 = row[20] || '';
-  const col21 = row[21] || '';
-  const col22 = row[22] || '';
-  
-  let rowClass = '';
-  if (!col22.trim()) {
-    rowClass = 'row-missing-eci';
-  }
-  if (col21.includes('REJECTED')) {
-    rowClass = 'row-rejected';
-  }
-  tableHTML += `<tr class="${rowClass}">`;
-  tableHTML += `<td>${nameWithSerial}</td>`;
-  tableHTML += `<td>${col20}</td>`;
-  tableHTML += `<td>${col21}</td>`;
-  tableHTML += `<td>${col22}</td>`;
-  tableHTML += '</tr>';
+  const statusTable = document.getElementById('statusTable');
+  const statusCounts = document.getElementById('statusCounts');
+  if(!statusTable || !statusCounts) return;
+  
+  let filteredRows = limitedCSVData;
+  if(filterValue) {
+    filteredRows = limitedCSVData.filter(row => row[1] === filterValue);
+  }
+  
+  updateStatusCountsOnly(filterValue);
+  
+  let tableHTML = '<div class="status-table-container"><table class="status-table"><thead><tr>';
+  tableHTML += `<th>${headers[3]}</th>`;
+  tableHTML += `<th>${headers[20]}</th>`;
+  tableHTML += `<th>${headers[21]}</th>`;
+  tableHTML += `<th>${headers[22]}</th>`;
+  tableHTML += '</tr></thead><tbody>';
+  
+  filteredRows.forEach(row => {
+  const serialNo = row[2] || '';
+  const name = row[3] || '';
+  const nameWithSerial = serialNo ? `${serialNo}. ${name}` : name;
+  const col20 = row[20] || '';
+  const col21 = row[21] || '';
+  const col22 = row[22] || '';
+  
+  let rowClass = '';
+  if (!col22.trim()) {
+    rowClass = 'row-missing-eci';
+  }
+  if (col21.includes('REJECTED')) {
+    rowClass = 'row-rejected';
+  }
+  tableHTML += `<tr class="${rowClass}">`;
+  tableHTML += `<td>${nameWithSerial}</td>`;
+  tableHTML += `<td>${col20}</td>`;
+  tableHTML += `<td>${col21}</td>`;
+  tableHTML += `<td>${col22}</td>`;
+  tableHTML += '</tr>';
 });
-  
-  tableHTML += '</tbody></table></div>';
-  statusTable.innerHTML = tableHTML;
+  
+  tableHTML += '</tbody></table></div>';
+  statusTable.innerHTML = tableHTML;
 }
 function fileToBase64(file){
-  return new Promise((resolve,reject)=>{
-    const reader=new FileReader();
-    reader.onload=()=>{
-      const result=reader.result;
-      reader.onload=null;reader.onerror=null;
-      resolve(result);
-    };
-    reader.onerror=(e)=>{
-      reader.onload=null;reader.onerror=null;
-      reject(e);
-    };
-    reader.readAsDataURL(file);
-  });
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>{
+      const result=reader.result;
+      reader.onload=null;reader.onerror=null;
+      resolve(result);
+    };
+    reader.onerror=(e)=>{
+      reader.onload=null;reader.onerror=null;
+      reject(e);
+    };
+    reader.readAsDataURL(file);
+  });
 }
 
 async function compressImageTo150KB(file, element) {
-  return new Promise(resolve => {
-    if (shouldDelayCompression()) {
-      console.log("Memory high, delaying compression queue addition");
-      setTimeout(() => {
-        compressionQueue.push({ file, element, resolve });
-        if (!isCompressing) processCompressionQueue();
-      }, 2000);
-    } else {
-      compressionQueue.push({ file, element, resolve });
-      if (!isCompressing) processCompressionQueue();
-    }
-  });
+  return new Promise(resolve => {
+    if (shouldDelayCompression()) {
+      console.log("Memory high, delaying compression queue addition");
+      setTimeout(() => {
+        compressionQueue.push({ file, element, resolve });
+        if (!isCompressing) processCompressionQueue();
+      }, 2000);
+    } else {
+      compressionQueue.push({ file, element, resolve });
+      if (!isCompressing) processCompressionQueue();
+    }
+  });
 }
 
 async function processCompressionQueue() {
-  if (isCompressing || compressionQueue.length === 0) return;
-  
-  if (compressionQueue.length > 1 && shouldDelayCompression()) {
-    setTimeout(processCompressionQueue, 1000); 
-    return;
-  }
-  
-  isCompressing = true;
-  const { file, element, resolve } = compressionQueue.shift();
-  let bitmap = null, canvas = null, img = null;
-  
-  element.isProcessing = true;
-  element.compressionFailed = false;
+  if (isCompressing || compressionQueue.length === 0) return;
+  
+  if (compressionQueue.length > 1 && shouldDelayCompression()) {
+    setTimeout(processCompressionQueue, 1000); 
+    return;
+  }
+  
+  isCompressing = true;
+  const { file, element, resolve } = compressionQueue.shift();
+  let bitmap = null, canvas = null, img = null;
+  
+  element.isProcessing = true;
+  element.compressionFailed = false;
 
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  const MAX_DIMENSION = isMobile ? 800 : 1200; 
-  const COOL_DOWN_DELAY = isMobile ? 1000 : 200;
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  const MAX_DIMENSION = isMobile ? 800 : 1200; 
+  const COOL_DOWN_DELAY = isMobile ? 1000 : 200;
 
-  try {
-    if (file.size <= 200 * 1024 && file.type === 'image/webp') {
-      element.compressedFile = file;
-      throw new Error("ALREADY_SMALL"); 
-    }
+  try {
+    if (file.size <= 200 * 1024 && file.type === 'image/webp') {
+      element.compressedFile = file;
+      throw new Error("ALREADY_SMALL"); 
+    }
 
-    if (window.createImageBitmap) {
-       try {
-         bitmap = await createImageBitmap(file, { 
-            resizeWidth: MAX_DIMENSION, 
-            resizeQuality: 'medium' 
-         });
-         
-         let targetWidth = bitmap.width;
-         let targetHeight = bitmap.height;
+    if (window.createImageBitmap) {
+       try {
+         bitmap = await createImageBitmap(file, { 
+            resizeWidth: MAX_DIMENSION, 
+            resizeQuality: 'medium' 
+         });
+         
+         let targetWidth = bitmap.width;
+         let targetHeight = bitmap.height;
 
-         canvas = document.createElement('canvas');
-         canvas.width = targetWidth;
-         canvas.height = targetHeight;
-         const ctx = canvas.getContext('2d');
-         
-         ctx.drawImage(bitmap, 0, 0, targetWidth, targetHeight);
+         canvas = document.createElement('canvas');
+         canvas.width = targetWidth;
+         canvas.height = targetHeight;
+         const ctx = canvas.getContext('2d');
+         
+         ctx.drawImage(bitmap, 0, 0, targetWidth, targetHeight);
 
-       } catch (bitmapError) {
-         console.warn("Bitmap API failed", bitmapError);
-         throw bitmapError;
-       }
-    } else {
-       throw new Error("Bitmap API not supported");
-    }
+       } catch (bitmapError) {
+         console.warn("Bitmap API failed", bitmapError);
+         throw bitmapError;
+       }
+    } else {
+       throw new Error("Bitmap API not supported");
+    }
 
-    let dataUrl = canvas.toDataURL('image/webp', 0.5);
-    
-    const res = await fetch(dataUrl);
-    const blob = await res.blob();
-    dataUrl = null; 
+    let dataUrl = canvas.toDataURL('image/webp', 0.5);
+    
+    const res = await fetch(dataUrl);
+    const blob = await res.blob();
+    dataUrl = null; 
 
-    if (blob.size > 0) {
-       const newName = file.name.replace(/\.[^/.]+$/, "") + ".webp";
-       element.compressedFile = new File([blob], newName, { type: 'image/webp' });
-       element.compressionFailed = false;
-    } else {
-       throw new Error("Zero byte result");
-    }
+    if (blob.size > 0) {
+       const newName = file.name.replace(/\.[^/.]+$/, "") + ".webp";
+       element.compressedFile = new File([blob], newName, { type: 'image/webp' });
+       element.compressionFailed = false;
+    } else {
+       throw new Error("Zero byte result");
+    }
 
-  } catch (error) {
-    if (error.message === "ALREADY_SMALL") {
-        element.isProcessing = false;
-        isCompressing = false;
-        resolve();
-        setTimeout(processCompressionQueue, COOL_DOWN_DELAY);
-        return;
-    }
+  } catch (error) {
+    if (error.message === "ALREADY_SMALL") {
+        element.isProcessing = false;
+        isCompressing = false;
+        resolve();
+        setTimeout(processCompressionQueue, COOL_DOWN_DELAY);
+        return;
+    }
 
-    if (!element.compressedFile) {
-        console.log("Attempting legacy fallback for: " + file.name);
-        try {
-           await processLegacyFallback(file, element, MAX_DIMENSION);
-        } catch (legacyError) {
-           console.error('Final Failure:', legacyError);
-           element.compressedFile = null; 
-           element.compressionFailed = true; 
-        }
-    } else {
-       console.error('Processing Error:', error);
-       element.compressedFile = null; 
-       element.compressionFailed = true; 
-    }
-  } finally {
-    element.isProcessing = false;
-    if (bitmap) bitmap.close();
-    cleanupResources(img, canvas);
-    isCompressing = false;
-    resolve();
-    setTimeout(processCompressionQueue, COOL_DOWN_DELAY);
-  }
+    if (!element.compressedFile) {
+        console.log("Attempting legacy fallback for: " + file.name);
+        try {
+           await processLegacyFallback(file, element, MAX_DIMENSION);
+        } catch (legacyError) {
+           console.error('Final Failure:', legacyError);
+           element.compressedFile = null; 
+           element.compressionFailed = true; 
+        }
+    } else {
+       console.error('Processing Error:', error);
+       element.compressedFile = null; 
+       element.compressionFailed = true; 
+    }
+  } finally {
+    element.isProcessing = false;
+    if (bitmap) bitmap.close();
+    cleanupResources(img, canvas);
+    isCompressing = false;
+    resolve();
+    setTimeout(processCompressionQueue, COOL_DOWN_DELAY);
+  }
 }
 
 async function processLegacyFallback(file, element, MAX_DIMENSION) {
-    let img = new Image();
-    img.src = URL.createObjectURL(file);
-    await new Promise((r, e) => { img.onload = r; img.onerror = e; });
-    
-    // Resize logic
-    let w = img.width, h = img.height;
-    if (w > MAX_DIMENSION || h > MAX_DIMENSION) {
-       if (w > h) { h = (h * MAX_DIMENSION) / w; w = MAX_DIMENSION; }
-       else { w = (w * MAX_DIMENSION) / h; h = MAX_DIMENSION; }
-    }
-    
-    let canvas = document.createElement('canvas');
-    canvas.width = w; canvas.height = h;
-    let ctx = canvas.getContext('2d');
-    ctx.drawImage(img, 0, 0, w, h);
-    
-    let dUrl = canvas.toDataURL('image/webp', 0.5);
-    let res = await fetch(dUrl);
-    let blob = await res.blob();
-    
-    const newName = file.name.replace(/\.[^/.]+$/, "") + ".webp";
-    element.compressedFile = new File([blob], newName, { type: 'image/webp' });
-    element.compressionFailed = false;
-    
-    // Mini cleanup
-    URL.revokeObjectURL(img.src);
-    img = null; canvas.width=0; canvas=null;
+    let img = new Image();
+    img.src = URL.createObjectURL(file);
+    await new Promise((r, e) => { img.onload = r; img.onerror = e; });
+    
+    // Resize logic
+    let w = img.width, h = img.height;
+    if (w > MAX_DIMENSION || h > MAX_DIMENSION) {
+       if (w > h) { h = (h * MAX_DIMENSION) / w; w = MAX_DIMENSION; }
+       else { w = (w * MAX_DIMENSION) / h; h = MAX_DIMENSION; }
+    }
+    
+    let canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    let ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, w, h);
+    
+    let dUrl = canvas.toDataURL('image/webp', 0.5);
+    let res = await fetch(dUrl);
+    let blob = await res.blob();
+    
+    const newName = file.name.replace(/\.[^/.]+$/, "") + ".webp";
+    element.compressedFile = new File([blob], newName, { type: 'image/webp' });
+    element.compressionFailed = false;
+    
+    // Mini cleanup
+    URL.revokeObjectURL(img.src);
+    img = null; canvas.width=0; canvas=null;
 }
 
 function cleanupResources(img, canvas) {
-  if (img) {
-    if (img.src && img.src.startsWith('blob:')) {
-      URL.revokeObjectURL(img.src);
-    }
-    img.src = ''; 
-    img.onload = null;
-    img.onerror = null;
-    img = null; 
-  }
-  if (canvas) {
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
-    canvas.width = 0;
-    canvas.height = 0;
-    if (canvas.parentNode) {
-      canvas.parentNode.removeChild(canvas);
-    }
-    canvas = null; 
-  }
-  if (window.gc) {
-    try {
-      window.gc();
-    } catch (e) {
-    }
-  }
+  if (img) {
+    if (img.src && img.src.startsWith('blob:')) {
+      URL.revokeObjectURL(img.src);
+    }
+    img.src = ''; 
+    img.onload = null;
+    img.onerror = null;
+    img = null; 
+  }
+  if (canvas) {
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    canvas.width = 0;
+    canvas.height = 0;
+    if (canvas.parentNode) {
+      canvas.parentNode.removeChild(canvas);
+    }
+    canvas = null; 
+  }
+  if (window.gc) {
+    try {
+      window.gc();
+    } catch (e) {
+    }
+  }
 }
 
 function createTrackingForm(){
@@ -1052,507 +1056,421 @@ function createTrackingForm(){
   trackingForm.innerHTML='';
   const dropdownsContainer=document.createElement('div');
   dropdownsContainer.className='tracking-dropdowns';
-  
-  // --- 1. Column 1 (Dynamic Dropdown) ---
   const container1=document.createElement('div');
   container1.className='form-field';
   const label1=document.createElement('label');
   label1.textContent=headers[1]+' *';
   container1.appendChild(label1);
-  
-  const select1=document.createElement('select');
-  select1.id='tracking-dropdown-1';
-  select1.className='tracking-dropdown';
-  select1.innerHTML=`<option value="">-- Select ${headers[1]} --</option>`;
-  
-  // Get Unique Values from CSV for Column 1
-  const uniqueCol1 = [...new Set(limitedCSVData.map(row=>row[1]))]
-    .filter(v=>v)
-    .sort((a,b)=>{
-       const numA=parseInt(a),numB=parseInt(b);
-       if(!isNaN(numA)&&!isNaN(numB)) return numA-numB;
-       return a.localeCompare(b);
-    });
-
-  uniqueCol1.forEach(val => {
-      const opt = document.createElement('option');
-      opt.value = val;
-      opt.textContent = val;
-      select1.appendChild(opt);
-  });
-  
-  select1.onchange = () => {
-     updateTrackingDropdown(2); // Trigger update for next dropdown
-  };
-  container1.appendChild(select1);
-  dropdownsContainer.appendChild(container1);
-
-  // --- 2. Column 2 ---
-  const container2=document.createElement('div');
-  container2.className='form-field';
-  const label2=document.createElement('label');
-  label2.textContent=headers[2];
-  container2.appendChild(label2);
-  
+  const fixedInput=document.createElement('input');
+  fixedInput.type='text';fixedInput.id='tracking-dropdown-1';fixedInput.className='tracking-dropdown';fixedInput.value='208';fixedInput.readOnly=true;fixedInput.style.backgroundColor='#f0f0f0';
+  const hiddenSelect=document.createElement('select');
+  hiddenSelect.id='tracking-hidden-select-1';hiddenSelect.style.display='none';
+  const hiddenOption=document.createElement('option');hiddenOption.value='208';hiddenOption.selected=true;hiddenSelect.appendChild(hiddenOption);
+  container1.appendChild(fixedInput);container1.appendChild(hiddenSelect);dropdownsContainer.appendChild(container1);
+  const container2=document.createElement('div');container2.className='form-field';
+  const label2=document.createElement('label');label2.textContent=headers[2];container2.appendChild(label2);
   const select2=document.createElement('select');
-  select2.id='tracking-dropdown-2';
-  select2.className='tracking-dropdown';
-  select2.disabled=true;
-  select2.innerHTML=`<option value="">-- Select ${headers[2]} --</option>`;
-  
-  select2.onchange=()=>{
-      updateTrackingDropdown(3);
-  };
-  container2.appendChild(select2);
-  dropdownsContainer.appendChild(container2);
-
-  // --- 3. Column 3 ---
-  const container3=document.createElement('div');
-  container3.className='form-field';
-  const label3=document.createElement('label');
-  label3.textContent=headers[3];
-  container3.appendChild(label3);
-  
+  select2.id='tracking-dropdown-2';select2.className='tracking-dropdown';select2.disabled=true;select2.innerHTML=`<option value="">-- Select ${headers[2]} --</option>`;
+  select2.onchange=()=>{const selectedValue1='208',selectedValue2=select2.value;if(selectedValue1&&selectedValue2) updateTrackingDropdown(3,selectedValue1,selectedValue2);};
+  container2.appendChild(select2);dropdownsContainer.appendChild(container2);
+  const container3=document.createElement('div');container3.className='form-field';
+  const label3=document.createElement('label');label3.textContent=headers[3];container3.appendChild(label3);
   const select3=document.createElement('select');
-  select3.id='tracking-dropdown-3';
-  select3.className='tracking-dropdown';
-  select3.disabled=true;
-  select3.innerHTML=`<option value="">-- Select ${headers[3]} --</option>`;
-  
+  select3.id='tracking-dropdown-3';select3.className='tracking-dropdown';select3.disabled=true;select3.innerHTML=`<option value="">-- Select ${headers[3]} --</option>`;
   select3.onchange=()=>{
-    const val1 = document.getElementById('tracking-dropdown-1').value;
-    const val2 = document.getElementById('tracking-dropdown-2').value;
-    const val3 = select3.value;
-    if(val1 && val2 && val3) searchTrackingData(val1, val2, val3);
+    const selectedValue1='208',selectedValue2=document.getElementById('tracking-dropdown-2').value,selectedValue3=select3.value;
+    if(selectedValue1&&selectedValue2&&selectedValue3) searchTrackingData(selectedValue1,selectedValue2,selectedValue3);
   };
-  container3.appendChild(select3);
-  dropdownsContainer.appendChild(container3);
+  container3.appendChild(select3);dropdownsContainer.appendChild(container3);
   
   trackingForm.appendChild(dropdownsContainer);
+  setTimeout(()=>{updateTrackingDropdown(2,'208');},100);
 }
 
-function updateTrackingDropdown(columnIndex){
-  const select=document.getElementById(`tracking-dropdown-${columnIndex}`);
-  if(!select) return;
-  
-  select.innerHTML=`<option value="">-- Select ${headers[columnIndex]} --</option>`;
-  select.disabled=true;
-  
-  const filters={};
-  
-  // Dynamic Filtering based on previous selections
-  if(columnIndex === 2) {
-      const val1 = document.getElementById('tracking-dropdown-1').value;
-      if(val1) filters[1] = val1;
-      else return; // Don't populate if parent is empty
+function updateTrackingDropdown(columnIndex,...selectedValues){
+  const select=document.getElementById(`tracking-dropdown-${columnIndex}`);if(!select) return;
+  select.innerHTML=`<option value="">-- Select ${headers[columnIndex]} --</option>`;select.disabled=true;
+  const filters={1:'208'};
+  for(let i=2;i<columnIndex;i++){
+    const prevSelect=document.getElementById(`tracking-dropdown-${i}`);
+    if(prevSelect&&prevSelect.value) filters[i]=prevSelect.value;
   }
-  else if(columnIndex === 3) {
-      const val1 = document.getElementById('tracking-dropdown-1').value;
-      const val2 = document.getElementById('tracking-dropdown-2').value;
-      if(val1) filters[1] = val1;
-      if(val2) filters[2] = val2;
-      else return;
-  }
-
   const filteredRows=limitedCSVData.filter(row=>Object.keys(filters).every(k=>row[k]===filters[k]));
-  
   const uniqueValues=[...new Set(filteredRows.map(row=>row[columnIndex]))].filter(v=>v).sort((a,b)=>{
-    const numA=parseInt(a),numB=parseInt(b);
-    if(!isNaN(numA)&&!isNaN(numB)) return numA-numB;
-    return a.localeCompare(b);
+    const numA=parseInt(a),numB=parseInt(b);if(!isNaN(numA)&&!isNaN(numB)) return numA-numB;return a.localeCompare(b);
   });
-  
   if(uniqueValues.length>0){
-    select.disabled=false;
-    uniqueValues.forEach(value=>{
-        const opt=document.createElement('option');
-        opt.value=value;
-        opt.textContent=value;
-        select.appendChild(opt);
-    });
-    
-    // Reset downstream dropdowns
+    select.disabled=false;uniqueValues.forEach(value=>{const opt=document.createElement('option');opt.value=value;opt.textContent=value;select.appendChild(opt);});
     for(let i=columnIndex+1;i<=3;i++){
       const downstreamSelect=document.getElementById(`tracking-dropdown-${i}`);
-      if(downstreamSelect){
-          downstreamSelect.innerHTML=`<option value="">-- Select ${headers[i]} --</option>`;
-          downstreamSelect.disabled=true;
-      }
+      if(downstreamSelect){downstreamSelect.innerHTML=`<option value="">-- Select ${headers[i]} --</option>`;downstreamSelect.disabled=true;}
     }
-    
     document.getElementById('trackingResults').innerHTML='';
-    
-    // Auto-select if only one option exists
-    if(uniqueValues.length===1){
-        select.value=uniqueValues[0];
-        // Trigger change for the next level manually
-        if(columnIndex < 3) updateTrackingDropdown(columnIndex + 1);
-        else select.onchange(); 
-    }
+    if(uniqueValues.length===1){select.value=uniqueValues[0];select.onchange();}
   }
 }
 
 function searchTrackingData(value1, value2 = null, value3 = null) {
-  const resultsContainer = document.getElementById('trackingResults');
-  resultsContainer.innerHTML = '<div class="loading-spinner"><i class="fa fa-spinner fa-spin"></i> Loading...</div>';
+  const resultsContainer = document.getElementById('trackingResults');
+  resultsContainer.innerHTML = '<div class="loading-spinner"><i class="fa fa-spinner fa-spin"></i> Loading...</div>';
 
-  setTimeout(() => {
-    const matchedRows = limitedCSVData.filter(row => {
-      if (value3 && row[3] !== value3) return false;
-      if (value2 && row[2] !== value2) return false;
-      return row[1] === value1;
-    });
+  setTimeout(() => {
+    const matchedRows = limitedCSVData.filter(row => {
+      if (value3 && row[3] !== value3) return false;
+      if (value2 && row[2] !== value2) return false;
+      return row[1] === value1;
+    });
 
-    if (matchedRows.length === 0) {
-      resultsContainer.innerHTML = '<p>No records found.</p>';
-      return;
-    }
+    if (matchedRows.length === 0) {
+      resultsContainer.innerHTML = '<p>No records found.</p>';
+      return;
+    }
 
-    const matchedRow = matchedRows[0];
-    let hasAnyData = false;
-    for (let i = 4; i < limitedHeaders.length - 1; i++) {
-      if (matchedRow[i] && matchedRow[i].trim() !== '') {
-        hasAnyData = true;
-        break;
-      }
-    }
+    const matchedRow = matchedRows[0];
+    let hasAnyData = false;
+    for (let i = 4; i < limitedHeaders.length - 1; i++) {
+      if (matchedRow[i] && matchedRow[i].trim() !== '') {
+        hasAnyData = true;
+        break;
+      }
+    }
 
-    if (!hasAnyData) {
-      resultsContainer.innerHTML = '<div class="no-data-message"><i class="fa fa-folder-open"></i> Documents Not Uploaded Yet</div>';
-      return;
-    }
+    if (!hasAnyData) {
+      resultsContainer.innerHTML = '<div class="no-data-message"><i class="fa fa-folder-open"></i> Documents Not Uploaded Yet</div>';
+      return;
+    }
 
-    const table = document.createElement('table');
-    table.className = 'tracking-table';
-    const tbody = document.createElement('tbody');
-    const selectedValue3 = document.getElementById('tracking-dropdown-3').value;
+    const table = document.createElement('table');
+    table.className = 'tracking-table';
+    const tbody = document.createElement('tbody');
+    const selectedValue3 = document.getElementById('tracking-dropdown-3').value;
 
-    headers.forEach((header, index) => {
-      if (index < 4 || index > 22 || index === limitedHeaders.length - 1 || index === 21 || index === 22) return;
-      
-      const value = matchedRow[index];
-      if (!value || value.trim() === '') return;
+    headers.forEach((header, index) => {
+      if (index < 4 || index > 22 || index === limitedHeaders.length - 1 || index === 21 || index === 22) return;
+      
+      const value = matchedRow[index];
+      if (!value || value.trim() === '') return;
 
-      const tr = document.createElement('tr');
-      const td = document.createElement('td');
-      td.colSpan = 2;
-      
-      const headerText = selectedValue3 ? `${header} of ${selectedValue3}` : header;
-      const headerDiv = document.createElement('div');
-      headerDiv.className = 'tracking-header';
-      headerDiv.textContent = headerText;
-      td.appendChild(headerDiv);
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.colSpan = 2;
+      
+      const headerText = selectedValue3 ? `${header} of ${selectedValue3}` : header;
+      const headerDiv = document.createElement('div');
+      headerDiv.className = 'tracking-header';
+      headerDiv.textContent = headerText;
+      td.appendChild(headerDiv);
 
-      const handleImagePreview = (url, alt) => {
-        const imageContainer = document.createElement('div');
-        imageContainer.style.textAlign = 'center';
-        imageContainer.style.margin = '10px 0';
-        
-        const loadingDiv = document.createElement('div');
-        loadingDiv.className = 'image-loading';
-        loadingDiv.innerHTML = '<div class="spinner"><i class="fa fa-spinner fa-spin"></i></div> Loading image...';
-        imageContainer.appendChild(loadingDiv);
-        
-        const img = document.createElement('img');
-        img.src = url;
-        img.alt = alt;
-        img.className = 'tracking-image';
-        img.style.cursor = 'pointer';
-        img.style.display = 'none';
-        
-        img.onload = () => {
-          loadingDiv.style.display = 'none';
-          img.style.display = 'block';
-        };
-        
-        img.onerror = () => {
-          loadingDiv.innerHTML = '<i class="fa fa-exclamation-triangle"></i> Image preview not available';
-          loadingDiv.style.color = '#dc3545';
-          img.style.display = 'none';
-        };
-        
-        img.onclick = () => window.open(url.includes('thumbnail') ? url.replace('thumbnail', 'file') : url, '_blank');
-        imageContainer.appendChild(img);
-        td.appendChild(imageContainer);
-      };
+      const handleImagePreview = (url, alt) => {
+        const imageContainer = document.createElement('div');
+        imageContainer.style.textAlign = 'center';
+        imageContainer.style.margin = '10px 0';
+        
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'image-loading';
+        loadingDiv.innerHTML = '<div class="spinner"><i class="fa fa-spinner fa-spin"></i></div> Loading image...';
+        imageContainer.appendChild(loadingDiv);
+        
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = alt;
+        img.className = 'tracking-image';
+        img.style.cursor = 'pointer';
+        img.style.display = 'none';
+        
+        img.onload = () => {
+          loadingDiv.style.display = 'none';
+          img.style.display = 'block';
+        };
+        
+        img.onerror = () => {
+          loadingDiv.innerHTML = '<i class="fa fa-exclamation-triangle"></i> Image preview not available';
+          loadingDiv.style.color = '#dc3545';
+          img.style.display = 'none';
+        };
+        
+        img.onclick = () => window.open(url.includes('thumbnail') ? url.replace('thumbnail', 'file') : url, '_blank');
+        imageContainer.appendChild(img);
+        td.appendChild(imageContainer);
+      };
 
-      const extractFileId = (url) => {
-        const match = url.match(/id=([-\w]{25,})/);
-        return match ? match[1] : null;
-      };
+      const extractFileId = (url) => {
+        const match = url.match(/id=([-\w]{25,})/);
+        return match ? match[1] : null;
+      };
 
-      if (value.includes('https://docs.google.com/uc?export=download&id=')) {
-        const fileId = extractFileId(value);
-        if (fileId) {
-          handleImagePreview(`https://drive.google.com/thumbnail?id=${fileId}&sz=w800`, headerText);
-        } else {
-          td.textContent = value;
-        }
-      } else if (value.includes('=HYPERLINK(')) {
-        const match = value.match(/=HYPERLINK\("([^"]+)",\s*"([^"]+)"\)/);
-        if (match) {
-          const url = match[1];
-          const fileId = extractFileId(url);
-          if (fileId) {
-            handleImagePreview(`https://drive.google.com/thumbnail?id=${fileId}&sz=w800`, headerText);
-          } else {
-            td.textContent = url;
-          }
-        }
-      } else if (value.startsWith('data:image')) {
-        const img = document.createElement('img');
-        img.src = value;
-        img.alt = headerText;
-        img.className = 'tracking-image';
-        img.style.objectFit = 'cover';
-        td.appendChild(img);
-      } else {
-        td.textContent = value;
-      }
+      if (value.includes('https://docs.google.com/uc?export=download&id=')) {
+        const fileId = extractFileId(value);
+        if (fileId) {
+          handleImagePreview(`https://drive.google.com/thumbnail?id=${fileId}&sz=w800`, headerText);
+        } else {
+          td.textContent = value;
+        }
+      } else if (value.includes('=HYPERLINK(')) {
+        const match = value.match(/=HYPERLINK\("([^"]+)",\s*"([^"]+)"\)/);
+        if (match) {
+          const url = match[1];
+          const fileId = extractFileId(url);
+          if (fileId) {
+            handleImagePreview(`https://drive.google.com/thumbnail?id=${fileId}&sz=w800`, headerText);
+          } else {
+            td.textContent = url;
+          }
+        }
+      } else if (value.startsWith('data:image')) {
+        const img = document.createElement('img');
+        img.src = value;
+        img.alt = headerText;
+        img.className = 'tracking-image';
+        img.style.objectFit = 'cover';
+        td.appendChild(img);
+      } else {
+        td.textContent = value;
+      }
 
-      tr.appendChild(td);
-      tbody.appendChild(tr);
-    });
+      tr.appendChild(td);
+      tbody.appendChild(tr);
+    });
 
-    table.appendChild(tbody);
-    resultsContainer.innerHTML = '';
-    resultsContainer.appendChild(table);
+    table.appendChild(tbody);
+    resultsContainer.innerHTML = '';
+    resultsContainer.appendChild(table);
 
-    const timeContainer = document.createElement('div');
-    timeContainer.className = 'time-container';
-    const timeValue = matchedRow[limitedHeaders.length - 1] || 'Not available';
-    timeContainer.innerHTML = `<strong>${headers[limitedHeaders.length - 1]}:</strong> ${timeValue}`;
-    resultsContainer.appendChild(timeContainer);
+    const timeContainer = document.createElement('div');
+    timeContainer.className = 'time-container';
+    const timeValue = matchedRow[limitedHeaders.length - 1] || 'Not available';
+    timeContainer.innerHTML = `<strong>${headers[limitedHeaders.length - 1]}:</strong> ${timeValue}`;
+    resultsContainer.appendChild(timeContainer);
 
-    const statusValue = matchedRow[21] || '';
-    if (statusValue && statusValue !== '') { 
-      const statusRow = document.createElement('div');
-      statusRow.className = 'status-row';
-      const statusText = `<strong>${headers[21]}:</strong> ${statusValue}`;
-      statusRow.innerHTML = statusText;
-      resultsContainer.appendChild(statusRow);
-    }
+    const statusValue = matchedRow[21] || '';
+    if (statusValue && statusValue !== '') { 
+      const statusRow = document.createElement('div');
+      statusRow.className = 'status-row';
+      const statusText = `<strong>${headers[21]}:</strong> ${statusValue}`;
+      statusRow.innerHTML = statusText;
+      resultsContainer.appendChild(statusRow);
+    }
 
-    const eciStatusValue = matchedRow[22] || '';
-    if (eciStatusValue && eciStatusValue.trim() !== '') {
-      const eciStatusRow = document.createElement('div');
-      eciStatusRow.className = 'status-row';
-      const eciStatusText = `<strong>${headers[22]}:</strong> ${eciStatusValue}`;
-      eciStatusRow.innerHTML = eciStatusText;
-      resultsContainer.appendChild(eciStatusRow);
-    }
+    const eciStatusValue = matchedRow[22] || '';
+    if (eciStatusValue && eciStatusValue.trim() !== '') {
+      const eciStatusRow = document.createElement('div');
+      eciStatusRow.className = 'status-row';
+      const eciStatusText = `<strong>${headers[22]}:</strong> ${eciStatusValue}`;
+      eciStatusRow.innerHTML = eciStatusText;
+      resultsContainer.appendChild(eciStatusRow);
+    }
 
-    if (!statusValue && hasAnyData) {
-      const buttonContainer = document.createElement('div');
-      buttonContainer.className = 'action-buttons';
-      
-      const verifyButton = document.createElement('button');
-      verifyButton.className = 'verify-btn verify-action';
-      verifyButton.innerHTML = '<i class="fa fa-check-circle"></i> VERIFY';
-      
-      const rejectButton = document.createElement('button');
-      rejectButton.className = 'verify-btn reject-action';
-      rejectButton.innerHTML = '<i class="fa fa-times-circle"></i> REJECT';
+    if (!statusValue && hasAnyData) {
+      const buttonContainer = document.createElement('div');
+      buttonContainer.className = 'action-buttons';
+      
+      const verifyButton = document.createElement('button');
+      verifyButton.className = 'verify-btn verify-action';
+      verifyButton.innerHTML = '<i class="fa fa-check-circle"></i> VERIFY';
+      
+      const rejectButton = document.createElement('button');
+      rejectButton.className = 'verify-btn reject-action';
+      rejectButton.innerHTML = '<i class="fa fa-times-circle"></i> REJECT';
 
-      const showVerificationModal = (actionType, actionText) => {
-        const modal = document.createElement('div');
-        modal.className = 'verify-modal';
-        modal.id = 'verifyModal';
-        
-        let modalContent = `<div class="verify-modal-content"><h3><i class="fa fa-question-circle"></i> Confirm ${actionText}</h3><p>Do you want to mark this as <strong>${actionText}</strong>?</p>`;
-        
-        if (actionType === 'REJECTED') {
-          modalContent += `<div class="reject-comment-section"><label for="rejectComment"><i class="fa fa-comment"></i> Reason for rejection (required):</label><textarea id="rejectComment" class="reject-comment" placeholder="Please provide reason for rejection..." rows="3" required></textarea><div id="commentError" class="error-message" style="color: red; display: none; margin-top: 5px;"><i class="fa fa-exclamation-circle"></i> Please enter a reason for rejection</div></div>`;
-        }
-        
-        modalContent += `<div class="verify-modal-buttons"><button class="verify-modal-btn verify-modal-confirm" id="confirmAction"><i class="fa fa-check"></i> Yes, Continue</button><button class="verify-modal-btn verify-modal-cancel" id="cancelAction"><i class="fa fa-times"></i> Cancel</button></div></div>`;
-        
-        modal.innerHTML = modalContent;
-        document.body.appendChild(modal);
-        modal.style.display = 'flex';
-        const idValue = matchedRow[0] || '';
+      const showVerificationModal = (actionType, actionText) => {
+        const modal = document.createElement('div');
+        modal.className = 'verify-modal';
+        modal.id = 'verifyModal';
+        
+        let modalContent = `<div class="verify-modal-content"><h3><i class="fa fa-question-circle"></i> Confirm ${actionText}</h3><p>Do you want to mark this as <strong>${actionText}</strong>?</p>`;
+        
+        if (actionType === 'REJECTED') {
+          modalContent += `<div class="reject-comment-section"><label for="rejectComment"><i class="fa fa-comment"></i> Reason for rejection (required):</label><textarea id="rejectComment" class="reject-comment" placeholder="Please provide reason for rejection..." rows="3" required></textarea><div id="commentError" class="error-message" style="color: red; display: none; margin-top: 5px;"><i class="fa fa-exclamation-circle"></i> Please enter a reason for rejection</div></div>`;
+        }
+        
+        modalContent += `<div class="verify-modal-buttons"><button class="verify-modal-btn verify-modal-confirm" id="confirmAction"><i class="fa fa-check"></i> Yes, Continue</button><button class="verify-modal-btn verify-modal-cancel" id="cancelAction"><i class="fa fa-times"></i> Cancel</button></div></div>`;
+        
+        modal.innerHTML = modalContent;
+        document.body.appendChild(modal);
+        modal.style.display = 'flex';
+        const idValue = matchedRow[0] || '';
 
-        document.getElementById('confirmAction').onclick = () => {
-          let canProceed = true, comment = '';
-          if (actionType === 'REJECTED') {
-            const commentInput = document.getElementById('rejectComment');
-            const errorDiv = document.getElementById('commentError');
-            comment = commentInput.value.trim();
-            if (!comment) {
-              errorDiv.style.display = 'block';
-              commentInput.style.borderColor = 'red';
-              canProceed = false;
-              commentInput.focus();
-              return;
-            }
-            errorDiv.style.display = 'none';
-            commentInput.style.borderColor = '';
-          }
+        document.getElementById('confirmAction').onclick = () => {
+          let canProceed = true, comment = '';
+          if (actionType === 'REJECTED') {
+            const commentInput = document.getElementById('rejectComment');
+            const errorDiv = document.getElementById('commentError');
+            comment = commentInput.value.trim();
+            if (!comment) {
+              errorDiv.style.display = 'block';
+              commentInput.style.borderColor = 'red';
+              canProceed = false;
+              commentInput.focus();
+              return;
+            }
+            errorDiv.style.display = 'none';
+            commentInput.style.borderColor = '';
+          }
 
-          if (canProceed) {
-            const confirmBtn = document.getElementById('confirmAction');
-            confirmBtn.innerHTML = '<span class="recording-spinner"><i class="fa fa-spinner fa-spin"></i></span> Recording...';
-            confirmBtn.disabled = true;
-            document.getElementById('cancelAction').disabled = true;
-            const finalStatus = actionType === 'REJECTED' ? `REJECTED: ${comment}` : actionType;
-            submitVerification(finalStatus, idValue);
-            setTimeout(() => {
-              if (modal.parentNode) {
-                modal.style.display = 'none';
-                document.body.removeChild(modal);
-              }
-            }, 2000);
-          }
-        };
+          if (canProceed) {
+            const confirmBtn = document.getElementById('confirmAction');
+            confirmBtn.innerHTML = '<span class="recording-spinner"><i class="fa fa-spinner fa-spin"></i></span> Recording...';
+            confirmBtn.disabled = true;
+            document.getElementById('cancelAction').disabled = true;
+            const finalStatus = actionType === 'REJECTED' ? `REJECTED: ${comment}` : actionType;
+            submitVerification(finalStatus, idValue);
+            setTimeout(() => {
+              if (modal.parentNode) {
+                modal.style.display = 'none';
+                document.body.removeChild(modal);
+              }
+            }, 2000);
+          }
+        };
 
-        document.getElementById('cancelAction').onclick = () => {
-          modal.style.display = 'none';
-          document.body.removeChild(modal);
-        };
+        document.getElementById('cancelAction').onclick = () => {
+          modal.style.display = 'none';
+          document.body.removeChild(modal);
+        };
 
-        if (actionType === 'REJECTED') {
-          const commentBox = document.getElementById('rejectComment');
-          commentBox.onkeydown = function(e) {
-             if (e.key === 'Enter' || e.key === ',') {
-                 e.preventDefault();
-             }
-          };
-          commentBox.oninput = function() {
-            this.value = this.value.replace(/[\n,]/g, ''); 
-            if (this.value.trim()) {
-              this.style.borderColor = '';
-              document.getElementById('commentError').style.display = 'none';
-            }
-          };
-        }
+        if (actionType === 'REJECTED') {
+          const commentBox = document.getElementById('rejectComment');
+          commentBox.onkeydown = function(e) {
+             if (e.key === 'Enter' || e.key === ',') {
+                 e.preventDefault();
+             }
+          };
+          commentBox.oninput = function() {
+            this.value = this.value.replace(/[\n,]/g, ''); 
+            if (this.value.trim()) {
+              this.style.borderColor = '';
+              document.getElementById('commentError').style.display = 'none';
+            }
+          };
+        }
 
-        modal.onclick = (e) => {
-          if (e.target === modal) {
-            modal.style.display = 'none';
-            document.body.removeChild(modal);
-          }
-        };
-      };
+        modal.onclick = (e) => {
+          if (e.target === modal) {
+            modal.style.display = 'none';
+            document.body.removeChild(modal);
+          }
+        };
+      };
 
-      verifyButton.onclick = () => showVerificationModal('VERIFIED', 'VERIFIED');
-      rejectButton.onclick = () => showVerificationModal('REJECTED', 'REJECTED');
-      buttonContainer.appendChild(verifyButton);
-      buttonContainer.appendChild(rejectButton);
-      resultsContainer.appendChild(buttonContainer);
-    }
-  }, 500);
+      verifyButton.onclick = () => showVerificationModal('VERIFIED', 'VERIFIED');
+      rejectButton.onclick = () => showVerificationModal('REJECTED', 'REJECTED');
+      buttonContainer.appendChild(verifyButton);
+      buttonContainer.appendChild(rejectButton);
+      resultsContainer.appendChild(buttonContainer);
+    }
+  }, 500);
 }
 
 function submitVerification(statusText,idValue){
-  const SCRIPT_URL='https://script.google.com/macros/s/AKfycbzln6bsC6nVnjc0NR88jz0J_d6v-ZuCgGPj1ec1y82OHGf8-JDGjrr3kukrsJhGBwEJIw/exec';
-  const now=new Date(),day=now.getDate(),month=now.toLocaleString('en-GB',{month:'short'}),year=now.getFullYear();
-  let hours=now.getHours(),minutes=now.getMinutes().toString().padStart(2,'0'),ampm=hours>=12?'pm':'am';
-  hours=hours%12;hours=hours?hours:12;
-  const formattedTime=`${day} ${month} ${year} ${hours}:${minutes}${ampm}`;
-  const payload={mode:'VERIFICATION_SYSTEM',col0:idValue,status:statusText,timestamp:formattedTime};
-  fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',cache:'no-cache',headers:{'Content-Type':'application/json',},body:JSON.stringify(payload)})
-  .then(()=>{alert("Action recorded successfully.");location.reload();}).catch(err=>{console.error("Error:",err);alert("Error: "+err);});
+  const SCRIPT_URL='https://script.google.com/macros/s/AKfycbzln6bsC6nVnjc0NR88jz0J_d6v-ZuCgGPj1ec1y82OHGf8-JDGjrr3kukrsJhGBwEJIw/exec';
+  const now=new Date(),day=now.getDate(),month=now.toLocaleString('en-GB',{month:'short'}),year=now.getFullYear();
+  let hours=now.getHours(),minutes=now.getMinutes().toString().padStart(2,'0'),ampm=hours>=12?'pm':'am';
+  hours=hours%12;hours=hours?hours:12;
+  const formattedTime=`${day} ${month} ${year} ${hours}:${minutes}${ampm}`;
+  const payload={mode:'VERIFICATION_SYSTEM',col0:idValue,status:statusText,timestamp:formattedTime};
+  fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',cache:'no-cache',headers:{'Content-Type':'application/json',},body:JSON.stringify(payload)})
+  .then(()=>{alert("Action recorded successfully.");location.reload();}).catch(err=>{console.error("Error:",err);alert("Error: "+err);});
 }
 
 function showTab(tabName,event){
-  document.querySelectorAll('.tab-content').forEach(tab=>{tab.classList.remove('active');});
-  document.querySelectorAll('.tab-btn').forEach(btn=>{btn.classList.remove('active');});
-  document.getElementById(`${tabName}-tab`).classList.add('active');
-  const clickedBtn = event.target.closest('.tab-btn');
-  if (clickedBtn) clickedBtn.classList.add('active');
-  else event.target.classList.add('active');
-  
-  if(tabName==='tracking'&&!document.getElementById('tracking-dropdown-1')) createTrackingForm();
-  if(tabName==='status'){
-    const statusFilter=document.getElementById('statusFilter');
-    if(statusFilter&&statusFilter.innerHTML===''){
-      if(csvData.length>0) createStatusDashboard();
-      else{
-        const statusDashboard=document.getElementById('statusDashboard');
-        if(statusDashboard){
-          statusDashboard.innerHTML='<div class="loading-spinner"><i class="fa fa-spinner fa-spin"></i> Loading data...</div>';
-          setTimeout(()=>{if(csvData.length>0) createStatusDashboard();},500);
-        }
-      }
-    }
-  }
+  document.querySelectorAll('.tab-content').forEach(tab=>{tab.classList.remove('active');});
+  document.querySelectorAll('.tab-btn').forEach(btn=>{btn.classList.remove('active');});
+  document.getElementById(`${tabName}-tab`).classList.add('active');
+  const clickedBtn = event.target.closest('.tab-btn');
+  if (clickedBtn) clickedBtn.classList.add('active');
+  else event.target.classList.add('active');
+  
+  if(tabName==='tracking'&&!document.getElementById('tracking-dropdown-1')) createTrackingForm();
+  if(tabName==='status'){
+    const statusFilter=document.getElementById('statusFilter');
+    if(statusFilter&&statusFilter.innerHTML===''){
+      if(csvData.length>0) createStatusDashboard();
+      else{
+        const statusDashboard=document.getElementById('statusDashboard');
+        if(statusDashboard){
+          statusDashboard.innerHTML='<div class="loading-spinner"><i class="fa fa-spinner fa-spin"></i> Loading data...</div>';
+          setTimeout(()=>{if(csvData.length>0) createStatusDashboard();},500);
+        }
+      }
+    }
+  }
 }
 
 window.addEventListener('beforeunload',()=>{
-  document.querySelectorAll('img').forEach(img=>{
-    if(img.src&&img.src.startsWith('blob:')) URL.revokeObjectURL(img.src);
-    img.src='';img.onload=null;img.onerror=null;
-  });
-  compressionQueue=[];
-  isCompressing=false;
+  document.querySelectorAll('img').forEach(img=>{
+    if(img.src&&img.src.startsWith('blob:')) URL.revokeObjectURL(img.src);
+    img.src='';img.onload=null;img.onerror=null;
+  });
+  compressionQueue=[];
+  isCompressing=false;
 });
 
 // --- AUTHENTICATION & TIMER LOGIC ---
 const SESSION_DURATION = 60 * 60 * 1000; // 1 Hour in milliseconds
 
 function attemptLogin() {
-    const pwd = document.getElementById('appPassword').value;
-    const errorMsg = document.getElementById('loginError');
-    
-    if (pwd === 'sosojojo') {
-        // Success
-        const loginTime = Date.now();
-        localStorage.setItem('app_login_time', loginTime);
-        startAppSession(loginTime);
-    } else {
-        // Fail
-        errorMsg.style.display = 'block';
-        document.getElementById('appPassword').value = '';
-    }
+    const pwd = document.getElementById('appPassword').value;
+    const errorMsg = document.getElementById('loginError');
+    
+    if (pwd === 'sosojojo') {
+        // Success
+        const loginTime = Date.now();
+        localStorage.setItem('app_login_time', loginTime);
+        startAppSession(loginTime);
+    } else {
+        // Fail
+        errorMsg.style.display = 'block';
+        document.getElementById('appPassword').value = '';
+    }
 }
 
 function startAppSession(loginTime) {
-    document.getElementById('login-overlay').style.display = 'none';
-    document.getElementById('main-app').style.display = 'block';
-    
-    // Start Timer Interval
-    setInterval(() => {
-        const now = Date.now();
-        const timeLeft = SESSION_DURATION - (now - loginTime);
-        
-        if (timeLeft <= 0) {
-            // Session Expired
-            localStorage.removeItem('app_login_time');
-            location.reload(); // Force reload to show login screen
-        } else {
-            // Update Timer Display
-            const minutes = Math.floor(timeLeft / 60000);
-            const seconds = Math.floor((timeLeft % 60000) / 1000);
-            document.getElementById('sessionTimer').innerText = 
-                `Session Left: ${minutes}m ${seconds}s`;
-        }
-    }, 1000);
+    document.getElementById('login-overlay').style.display = 'none';
+    document.getElementById('main-app').style.display = 'block';
+    
+    // Start Timer Interval
+    setInterval(() => {
+        const now = Date.now();
+        const timeLeft = SESSION_DURATION - (now - loginTime);
+        
+        if (timeLeft <= 0) {
+            // Session Expired
+            localStorage.removeItem('app_login_time');
+            location.reload(); // Force reload to show login screen
+        } else {
+            // Update Timer Display
+            const minutes = Math.floor(timeLeft / 60000);
+            const seconds = Math.floor((timeLeft % 60000) / 1000);
+            document.getElementById('sessionTimer').innerText = 
+                `Session Left: ${minutes}m ${seconds}s`;
+        }
+    }, 1000);
 }
 
 // --- UPDATED WINDOW.ONLOAD ---
 window.onload = async function() {
-    // 1. Check Session
-    const storedTime = localStorage.getItem('app_login_time');
-    const now = Date.now();
+    // 1. Check Session
+    const storedTime = localStorage.getItem('app_login_time');
+    const now = Date.now();
 
-    if (storedTime && (now - storedTime < SESSION_DURATION)) {
-        // Session Valid -> Skip Login
-        startAppSession(parseInt(storedTime));
-    } else {
-        // Session Invalid -> Show Login (Default state is hidden app, visible overlay)
-        document.getElementById('login-overlay').style.display = 'flex';
-        document.getElementById('main-app').style.display = 'none';
-    }
+    if (storedTime && (now - storedTime < SESSION_DURATION)) {
+        // Session Valid -> Skip Login
+        startAppSession(parseInt(storedTime));
+    } else {
+        // Session Invalid -> Show Login (Default state is hidden app, visible overlay)
+        document.getElementById('login-overlay').style.display = 'flex';
+        document.getElementById('main-app').style.display = 'none';
+    }
 
-    // 2. Load Data
-    await loadCSVData();
-    
-    // 3. Set Default Tab to DOCUMENTS (Not Tracking)
-    // Find the documents tab button and click it
-    const docTabBtn = document.querySelector('button[onclick*="documents"]');
-    if(docTabBtn) {
-        showTab('documents', { target: docTabBtn });
-    }
+    // 2. Load Data
+    await loadCSVData();
+    
+    // 3. Set Default Tab to DOCUMENTS (Not Tracking)
+    // Find the documents tab button and click it
+    const docTabBtn = document.querySelector('button[onclick*="documents"]');
+    if(docTabBtn) {
+        showTab('documents', { target: docTabBtn });
+    }
 };
 </script>
 </html>
