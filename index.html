@@ -1118,7 +1118,6 @@ function updateTrackingDropdown(columnIndex,...selectedValues){
       if(val2) filters[2] = val2;
   }
   const filteredRows=limitedCSVData.filter(row=>Object.keys(filters).every(k=>row[k]===filters[k]));
-  const filteredRows=limitedCSVData.filter(row=>Object.keys(filters).every(k=>row[k]===filters[k]));
   const uniqueValues=[...new Set(filteredRows.map(row=>row[columnIndex]))].filter(v=>v).sort((a,b)=>{
     const numA=parseInt(a),numB=parseInt(b);if(!isNaN(numA)&&!isNaN(numB)) return numA-numB;return a.localeCompare(b);
   });
