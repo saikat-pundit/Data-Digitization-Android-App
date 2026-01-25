@@ -103,8 +103,14 @@
     text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3);
 }
 .login-input {
-    width: 100%; padding: 12px; margin: 15px 0; border: 2px solid #ddd;
-    border-radius: 6px; font-size: 16px; text-align: center;
+    width: 100%; 
+    padding: 12px; 
+    margin: 15px 0; 
+    border: 2px solid #ddd;
+    border-radius: 6px; 
+    font-size: 16px; 
+    text-align: center;
+    box-sizing: border-box; /* This fixes the right-side sticking issue */
 }
 .login-btn {
     width: 100%; padding: 12px; background: #27ae60; color: white;
@@ -157,9 +163,9 @@
             <p style="margin: 5px 0 0 0;">Personalised Document Digitization Portal</p>
         </header>
         <div class="tabs">
-            <button class="tab-btn" onclick="showTab('documents', event)"><i class="fa fa-file-text-o"></i> Documents</button>
+            <button class="tab-btn active" onclick="showTab('documents', event)"><i class="fa fa-file-text-o"></i> Documents</button>
             <button class="tab-btn" onclick="showTab('status', event)"><i class="fa fa-bar-chart"></i> Dashboard</button>
-            <button class="tab-btn active" onclick="showTab('tracking', event)"><i class="fa fa-search"></i> Tracking</button>
+            <button class="tab-btn" onclick="showTab('tracking', event)"><i class="fa fa-search"></i> Tracking</button>
         </div>
         <div id="documents-tab" class="tab-content active">
             <main class="form-card">
@@ -375,8 +381,8 @@ function createSearchableDropdown(container,header,columnIndex){
   const select=document.createElement('select');
   select.name=header; select.id=`dropdown-${columnIndex}`; select.required=mandatoryIndices.includes(columnIndex); select.style.display='none';
   if(columnIndex===1){
-    searchInput.value="212"; searchInput.readOnly=true; searchInput.style.backgroundColor='#f0f0f0';
-    select.innerHTML=`<option value="212">212</option>`; select.value="212";
+    searchInput.value="208"; searchInput.readOnly=true; searchInput.style.backgroundColor='#f0f0f0';
+    select.innerHTML=`<option value="208">208</option>`; select.value="208";
     setTimeout(()=>updateNextDropdowns(1),300);
   } else{
     searchInput.placeholder=`Search ${header}...`;
@@ -453,19 +459,27 @@ function createSubmitButton(){
 function setupFormSubmission(){
   form.onsubmit=(e)=>{
     e.preventDefault();
+    
+    // 1. Validate Dropdown 3 (Elector) specifically
     const dropdown3=document.getElementById('dropdown-3');
     if(!dropdown3||!dropdown3.value){ 
-      alert("Please select all required fields before submitting"); 
+      alert("Please select the Elector before submitting"); 
       return; 
     }
-    let fileCount=0;
-    limitedHeaders.forEach((h,i)=>{
-      const f=document.getElementById(`file-${i}`);
-      if(f && f.files.length > 0) fileCount++;
-    });
+    let missingMandatory = false;
     
-    if(fileCount===0){ 
-      alert("Please attach at least one document before submitting"); 
+    mandatoryIndices.forEach(idx => {
+        // Check for Dropdown
+        const drop = document.getElementById(`dropdown-${idx}`);
+        if(drop && !drop.value) missingMandatory = true;
+
+        // Check for File Input
+        const fileInp = document.getElementById(`file-${idx}`);
+        if(fileInp && fileInp.files.length === 0 && !fileInp.compressedFile) missingMandatory = true;
+    });
+
+    if(missingMandatory){ 
+      alert("Please complete all Mandatory fields (marked with *) including required Photos."); 
       return; 
     }
     const modal = document.getElementById('confirmModal');
@@ -547,7 +561,12 @@ function setupFormSubmission(){
         confirmBtn.style.cursor = 'pointer';
         confirmBtn.style.opacity = '1';
         confirmBtn.innerHTML = '<i class="fa fa-cloud-upload"></i>Upload';
-        statusMsg.textContent = "All images optimized and ready.";
+        let successCount = 0;
+        limitedHeaders.forEach((h,i)=>{
+             const f = document.getElementById(`file-${i}`);
+             if(f && (f.compressedFile || (f.files && f.files.length > 0))) successCount++;
+        });
+        statusMsg.textContent = `${successCount} Image(s) optimized and ready.`;
         statusMsg.style.color = "#27ae60";
         clearInterval(checkInterval); 
       } else if (anyError) {
@@ -985,33 +1004,33 @@ function createTrackingForm(){
   const container1=document.createElement('div');container1.className='form-field';
   const label1=document.createElement('label');label1.textContent=headers[1]+' *';container1.appendChild(label1);
   const fixedInput=document.createElement('input');
-  fixedInput.type='text';fixedInput.id='tracking-dropdown-1';fixedInput.className='tracking-dropdown';fixedInput.value='212';fixedInput.readOnly=true;fixedInput.style.backgroundColor='#f0f0f0';
+  fixedInput.type='text';fixedInput.id='tracking-dropdown-1';fixedInput.className='tracking-dropdown';fixedInput.value='208';fixedInput.readOnly=true;fixedInput.style.backgroundColor='#f0f0f0';
   const hiddenSelect=document.createElement('select');
   hiddenSelect.id='tracking-hidden-select-1';hiddenSelect.style.display='none';
-  const hiddenOption=document.createElement('option');hiddenOption.value='212';hiddenOption.selected=true;hiddenSelect.appendChild(hiddenOption);
+  const hiddenOption=document.createElement('option');hiddenOption.value='208';hiddenOption.selected=true;hiddenSelect.appendChild(hiddenOption);
   container1.appendChild(fixedInput);container1.appendChild(hiddenSelect);dropdownsContainer.appendChild(container1);
   const container2=document.createElement('div');container2.className='form-field';
   const label2=document.createElement('label');label2.textContent=headers[2];container2.appendChild(label2);
   const select2=document.createElement('select');
   select2.id='tracking-dropdown-2';select2.className='tracking-dropdown';select2.disabled=true;select2.innerHTML=`<option value="">-- Select ${headers[2]} --</option>`;
-  select2.onchange=()=>{const selectedValue1='212',selectedValue2=select2.value;if(selectedValue1&&selectedValue2) updateTrackingDropdown(3,selectedValue1,selectedValue2);};
+  select2.onchange=()=>{const selectedValue1='208',selectedValue2=select2.value;if(selectedValue1&&selectedValue2) updateTrackingDropdown(3,selectedValue1,selectedValue2);};
   container2.appendChild(select2);dropdownsContainer.appendChild(container2);
   const container3=document.createElement('div');container3.className='form-field';
   const label3=document.createElement('label');label3.textContent=headers[3];container3.appendChild(label3);
   const select3=document.createElement('select');
   select3.id='tracking-dropdown-3';select3.className='tracking-dropdown';select3.disabled=true;select3.innerHTML=`<option value="">-- Select ${headers[3]} --</option>`;
   select3.onchange=()=>{
-    const selectedValue1='212',selectedValue2=document.getElementById('tracking-dropdown-2').value,selectedValue3=select3.value;
+    const selectedValue1='208',selectedValue2=document.getElementById('tracking-dropdown-2').value,selectedValue3=select3.value;
     if(selectedValue1&&selectedValue2&&selectedValue3) searchTrackingData(selectedValue1,selectedValue2,selectedValue3);
   };
   container3.appendChild(select3);dropdownsContainer.appendChild(container3);trackingForm.appendChild(dropdownsContainer);
-  setTimeout(()=>{updateTrackingDropdown(2,'212');},100);
+  setTimeout(()=>{updateTrackingDropdown(2,'208');},100);
 }
 
 function updateTrackingDropdown(columnIndex,...selectedValues){
   const select=document.getElementById(`tracking-dropdown-${columnIndex}`);if(!select) return;
   select.innerHTML=`<option value="">-- Select ${headers[columnIndex]} --</option>`;select.disabled=true;
-  const filters={1:'212'};
+  const filters={1:'208'};
   for(let i=2;i<columnIndex;i++){
     const prevSelect=document.getElementById(`tracking-dropdown-${i}`);
     if(prevSelect&&prevSelect.value) filters[i]=prevSelect.value;
