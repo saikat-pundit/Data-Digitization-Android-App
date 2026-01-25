@@ -6,7 +6,6 @@
     <title>AERO 206 to 216</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <style>
-        /* [YOUR CSS REMAINS EXACTLY THE SAME] */
         .form-field { margin-bottom: 18px; width: 100%; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; }
         .form-field label { display: block; font-weight: 600; margin-bottom: 8px; color: #000; font-size: 14px; }
         .searchable-dropdown-wrapper, .status-filter-container { position: relative; width: 100%; max-width: 300px; margin-bottom: 20px; text-align: left; }
@@ -94,11 +93,63 @@
         .app-header .fa-database { font-size: 2em; }
         .camera-btn { background: #2c3e50; color: white; padding: 12px; width: 100%; border-radius: 6px; border: none; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 10px; }
         .camera-btn:active { transform: scale(0.98); }
+#login-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: #2c3e50; z-index: 9999;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.login-box {
+    background: white; padding: 30px; border-radius: 12px; width: 85%; max-width: 320px;
+    text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+}
+.login-input {
+    width: 100%; padding: 12px; margin: 15px 0; border: 2px solid #ddd;
+    border-radius: 6px; font-size: 16px; text-align: center;
+}
+.login-btn {
+    width: 100%; padding: 12px; background: #27ae60; color: white;
+    border: none; border-radius: 6px; font-size: 16px; font-weight: bold;
+}
+.preview-img {
+    width: 100%; max-height: 200px; object-fit: contain;
+    border-radius: 6px; border: 1px solid #ddd; margin-top: 10px; display: none;
+}
+.header-controls {
+    display: flex; justify-content: space-between; align-items: center;
+    background: white; padding: 10px; border-radius: 8px; margin-bottom: 15px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+.refresh-btn {
+    background: none; border: none; font-size: 18px; cursor: pointer;
+    color: #27ae60; padding: 5px;
+}
+.session-timer {
+    font-size: 12px; font-weight: bold; color: #e67e22;
+}
     </style>
 </head>
 <body>
-    <div class="main-container">
-        <header class="app-header">
+    <div id="login-overlay">
+        <div class="login-box">
+            <h2 style="color:#333; margin-top:0;">SECURE ACCESS</h2>
+            <p style="color:#666; font-size:14px;">Enter Password to Continue</p>
+            <input type="password" id="appPassword" class="login-input" placeholder="Password">
+            <button class="login-btn" onclick="attemptLogin()">ENTER</button>
+            <p id="loginError" style="color:red; display:none; margin-top:10px;">Incorrect Password</p>
+        </div>
+    </div>
+
+    <div id="main-app" style="display:none;">
+        <div class="main-container">
+            
+            <div class="header-controls">
+                <div class="session-timer" id="sessionTimer">Session: Checking...</div>
+                <button class="refresh-btn" onclick="location.reload()">
+                    <i class="fa fa-refresh"></i> Refresh App
+                </button>
+            </div>
+
+            <header class="app-header">
             <div style="display: flex; align-items: center; gap: 10px;">
                 <i class="fa fa-database fa-2x"></i>
                 <h1 class="animated-title">AERO_206 to 216</h1>
@@ -125,19 +176,16 @@
                 </div>
             </div>
         </div>
-        <div id="tracking-tab" class="tab-content">
+       <div id="tracking-tab" class="tab-content">
             <div class="form-card">
                 <h3>Document Tracking</h3>
                 <div id="trackingForm"></div>
                 <div id="trackingResults"></div>
             </div>
         </div>
-    </div>
-  
-  <div id="confirmModal" class="modal" style="display:none;"></div>
+    </div> </div> <div id="confirmModal" class="modal" style="display:none;"></div>
 </body>
 <script>
-// --- GLOBAL VARIABLES ---
 const csvUrl="https://docs.google.com/spreadsheets/d/e/2PACX-1vTBuDewVgTDoc_zaWYQyaWKpBt0RwtFPhnBrpqr1v6Y5wfAmPpEYvTsaWd64bsHhH68iYNtLMSRpOQ0/pub?gid=979866094&single=true&output=csv";
 const form=document.getElementById('csvForm');
 let headers=[],csvData=[],limitedCSVData=[],limitedHeaders=[];
@@ -159,11 +207,17 @@ function shouldDelayCompression() {
 function createImageField(container, header, columnIndex) {
   const wrapper = document.createElement('div');
   
+  // 1. Capture Button
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 'camera-btn';
   btn.innerHTML = `<i class="fa fa-camera"></i> Capture ${header}`;
   
+  // 2. Image Preview Element (New)
+  const imgPreview = document.createElement('img');
+  imgPreview.className = 'preview-img';
+  
+  // 3. Status Text
   const status = document.createElement('span');
   status.id = `status-${columnIndex}`;
   status.style.fontSize = '14px';
@@ -172,6 +226,7 @@ function createImageField(container, header, columnIndex) {
   status.style.color = '#e74c3c';
   status.style.textAlign = 'center';
 
+  // 4. Clear Button
   const clearBtn = document.createElement('button');
   clearBtn.type = 'button';
   clearBtn.textContent = 'Clear';
@@ -180,30 +235,22 @@ function createImageField(container, header, columnIndex) {
   clearBtn.style.marginTop = '5px';
   clearBtn.style.width = '100%';
 
+  // 5. Hidden Input
   const hiddenInput = document.createElement('input');
   hiddenInput.type = 'file';
   hiddenInput.id = `file-${columnIndex}`;
   hiddenInput.style.display = 'none';
   hiddenInput.accept = 'image/*';
 
-  // --- SAFE CAMERA LAUNCH ---
+  // --- LOGIC ---
   btn.onclick = async () => {
-    // Safety Check: Is Capacitor loaded?
     if (typeof Capacitor === 'undefined' || !Capacitor.Plugins) {
-        alert("Camera Error: Native bridge not found. App may not be installed correctly.");
-        return;
+        alert("Camera Error: Native bridge not found."); return;
     }
-
     try {
-        // Access Plugin safely inside the click
         const Camera = Capacitor.Plugins.Camera;
-        
         const image = await Camera.getPhoto({
-            quality: 90,
-            allowEditing: false,
-            resultType: 'uri', // 'uri' is safer string fallback
-            source: 'CAMERA',
-            width: 1200
+            quality: 90, allowEditing: false, resultType: 'uri', source: 'CAMERA', width: 1200
         });
 
         status.innerText = 'Processing...';
@@ -216,6 +263,10 @@ function createImageField(container, header, columnIndex) {
         const dt = new DataTransfer();
         dt.items.add(file);
         hiddenInput.files = dt.files;
+        
+        // SHOW PREVIEW
+        imgPreview.src = URL.createObjectURL(file);
+        imgPreview.style.display = 'block';
 
         await compressImageTo150KB(file, hiddenInput);
 
@@ -225,17 +276,18 @@ function createImageField(container, header, columnIndex) {
         btn.style.background = '#27ae60';
 
     } catch (e) {
-        // Show the actual error on the phone so we know what happened
         console.warn('Camera failed', e);
-        if(e.message !== 'User cancelled photos app') {
-            alert("Camera Failed: " + e.message);
-        }
     }
   };
 
   clearBtn.onclick = function(){
     hiddenInput.value = ''; 
     hiddenInput.compressedFile = null; 
+    
+    // HIDE PREVIEW
+    imgPreview.style.display = 'none';
+    imgPreview.src = '';
+    
     status.innerHTML = 'No photo'; 
     status.style.color = '#e74c3c'; 
     clearBtn.style.display = 'none';
@@ -243,6 +295,7 @@ function createImageField(container, header, columnIndex) {
   };
 
   wrapper.appendChild(btn);
+  wrapper.appendChild(imgPreview);
   wrapper.appendChild(status);
   wrapper.appendChild(clearBtn);
   wrapper.appendChild(hiddenInput);
@@ -254,7 +307,6 @@ function createImageField(container, header, columnIndex) {
     container.appendChild(nameInp);
   }
 }
-
 // [ALL YOUR OTHER FUNCTIONS REMAIN EXACTLY THE SAME BELOW]
 async function loadCSVData(){
   try{
@@ -1274,9 +1326,72 @@ window.addEventListener('beforeunload',()=>{
   isCompressing=false;
 });
 
+// --- AUTHENTICATION & TIMER LOGIC ---
+const SESSION_DURATION = 60 * 60 * 1000; // 1 Hour in milliseconds
+
+function attemptLogin() {
+    const pwd = document.getElementById('appPassword').value;
+    const errorMsg = document.getElementById('loginError');
+    
+    if (pwd === 'sosojojo') {
+        // Success
+        const loginTime = Date.now();
+        localStorage.setItem('app_login_time', loginTime);
+        startAppSession(loginTime);
+    } else {
+        // Fail
+        errorMsg.style.display = 'block';
+        document.getElementById('appPassword').value = '';
+    }
+}
+
+function startAppSession(loginTime) {
+    document.getElementById('login-overlay').style.display = 'none';
+    document.getElementById('main-app').style.display = 'block';
+    
+    // Start Timer Interval
+    setInterval(() => {
+        const now = Date.now();
+        const timeLeft = SESSION_DURATION - (now - loginTime);
+        
+        if (timeLeft <= 0) {
+            // Session Expired
+            localStorage.removeItem('app_login_time');
+            location.reload(); // Force reload to show login screen
+        } else {
+            // Update Timer Display
+            const minutes = Math.floor(timeLeft / 60000);
+            const seconds = Math.floor((timeLeft % 60000) / 1000);
+            document.getElementById('sessionTimer').innerText = 
+                `Session Left: ${minutes}m ${seconds}s`;
+        }
+    }, 1000);
+}
+
+// --- UPDATED WINDOW.ONLOAD ---
 window.onload = async function() {
-  await loadCSVData();
-  showTab('tracking', { target: document.querySelector('[onclick*="tracking"]') });
+    // 1. Check Session
+    const storedTime = localStorage.getItem('app_login_time');
+    const now = Date.now();
+
+    if (storedTime && (now - storedTime < SESSION_DURATION)) {
+        // Session Valid -> Skip Login
+        startAppSession(parseInt(storedTime));
+    } else {
+        // Session Invalid -> Show Login (Default state is hidden app, visible overlay)
+        document.getElementById('login-overlay').style.display = 'flex';
+        document.getElementById('main-app').style.display = 'none';
+    }
+
+    // 2. Load Data
+    await loadCSVData();
+    
+    // 3. Set Default Tab to DOCUMENTS (Not Tracking)
+    // Find the documents tab button and click it
+    const docTabBtn = document.querySelector('button[onclick*="documents"]');
+    if(docTabBtn) {
+        showTab('documents', { target: docTabBtn });
+    }
 };
 </script>
 </html>
