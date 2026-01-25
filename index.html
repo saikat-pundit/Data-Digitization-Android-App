@@ -371,15 +371,20 @@ function createFormFields(){
 function createSearchableDropdown(container,header,columnIndex){
   const wrapper=document.createElement('div');
   wrapper.className='searchable-dropdown-wrapper';
+  
   if(!limitedCSVData||limitedCSVData.length===0){
     const errorMsg=document.createElement('p');
     errorMsg.textContent='Data not loaded yet'; errorMsg.style.color='red';
     container.appendChild(errorMsg); return;
   }
+  
   const searchInput=document.createElement('input');
   searchInput.type='text'; searchInput.className='search-input'; searchInput.id=`search-${columnIndex}`;
+  
   const select=document.createElement('select');
   select.name=header; select.id=`dropdown-${columnIndex}`; select.required=mandatoryIndices.includes(columnIndex); select.style.display='none';
+  const dropdownList=document.createElement('div');
+  dropdownList.className='dropdown-list'; dropdownList.style.display='none';
   if(columnIndex===1){
     searchInput.placeholder = "Select AC No...";
     const def = document.createElement('option'); 
@@ -401,12 +406,13 @@ function createSearchableDropdown(container,header,columnIndex){
             dropdownList.style.display = 'none';
             updateNextDropdowns(columnIndex);
         };
-        dropdownList.appendChild(item);
+        dropdownList.appendChild(item); 
     });
+    
     searchInput.readOnly = false;
     searchInput.style.backgroundColor = 'white';
     
-  } else{
+  } else {
     searchInput.placeholder=`Search ${header}...`;
     const def=document.createElement('option'); def.value=""; def.textContent=`-- Select ${header} --`; select.appendChild(def);
   }
