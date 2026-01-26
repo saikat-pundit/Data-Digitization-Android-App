@@ -695,10 +695,11 @@ function setupFormSubmission(){
       document.getElementById('uploadStatus').textContent='Sending to server...';
       const scriptUrls = [
           'https://script.google.com/macros/s/AKfycbxWFPwah8jBC6RK13Yduk24r5W1Y1yn-OiyIIJSZsTmFiaFvh5o0ILZF1LTtLOsZVfyNQ/exec',
-          'https://script.google.com/macros/s/AKfycbxWFPwah8jBC6RK13Yduk24r5W1Y1yn-OiyIIJSZsTmFiaFvh5o0ILZF1LTtLOsZVfyNQ/exec', 
-          'https://script.google.com/macros/s/AKfycbxWFPwah8jBC6RK13Yduk24r5W1Y1yn-OiyIIJSZsTmFiaFvh5o0ILZF1LTtLOsZVfyNQ/exec', 
-          'https://script.google.com/macros/s/AKfycbxWFPwah8jBC6RK13Yduk24r5W1Y1yn-OiyIIJSZsTmFiaFvh5o0ILZF1LTtLOsZVfyNQ/exec', 
-          'https://script.google.com/macros/s/AKfycbxWFPwah8jBC6RK13Yduk24r5W1Y1yn-OiyIIJSZsTmFiaFvh5o0ILZF1LTtLOsZVfyNQ/exec'  
+          'https://script.google.com/macros/s/AKfycbx5kRz1YbR7oHdwIDin35pzIKzdbjTUsHsyy_2XGmAXyRn8uqbGEuM8KB6i3AVntiug/exec', 
+          'https://script.google.com/macros/s/AKfycbwY53QVwqSk8JKznvL02eTqxTQU0pwbfq_Jr_ab8UIDkkTpz5EleTVf5InC28FuVcj_kQ/exec', 
+          'https://script.google.com/macros/s/AKfycby_iLHJWeXM5UrfliEt3disbmVJ5rryY5NkNc-mk9jSiiDgDBkKKvgRRrr6XX8fqNbfLg/exec', 
+          'https://script.google.com/macros/s/AKfycbzSdAzv36YP5gH6j2Ju0YzrFDS9Q9QOCsFfVBSA6cRzExwP4JMjelcTAlYLYCsMPk65/exec',
+          'https://script.google.com/macros/s/AKfycbxoPS2n4V-oWqqnPQ6iJt-apGJAmR83-vxxHfJJ7bpCXWwCzOIGJW1iXgvzQxlcTLNQZw/exec'
       ];
       
       const randomUrl = scriptUrls[Math.floor(Math.random() * scriptUrls.length)];
@@ -714,13 +715,11 @@ function setupFormSubmission(){
       clearInterval(timerInterval);
       
       setTimeout(()=>{ 
-    alert("Success! Data Uploaded."); 
-    freeUpMemory(); 
-    document.getElementById('confirmModal').style.display = 'none';
-    document.getElementById('progressBar').style.width = '0%';
-    document.getElementById('uploadStatus').textContent = 'Ready';
-
-  }, 1000);
+        alert("Success! Data Uploaded."); 
+        freeUpMemory(); 
+        document.getElementById('confirmModal').style.display = 'none';
+        location.reload(); 
+      }, 100);
       
     } catch(err){
       document.getElementById('uploadStatus').textContent='Upload failed!'; 
