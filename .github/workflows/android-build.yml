@@ -2,6 +2,7 @@ name: Build Android APK
 
 on:
   workflow_dispatch:  # Manual trigger
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -27,8 +28,14 @@ jobs:
         run: |
           mkdir www
           mv index.html www/
-          if [ -f logo.png ]; then
-            cp logo.png www/
+          
+          # Move images if they exist
+          if [ -f logo.png ]; then cp logo.png www/; fi
+          if [ -f splash.png ]; then cp splash.png www/; fi
+          
+          # Ensure capacitor config exists with Splash settings
+          if [ ! -f capacitor.config.json ]; then
+            echo '{"appId":"com.aero.app","appName":"AERO","webDir":"www","plugins":{"SplashScreen":{"launchShowDuration":3000,"androidSplashResourceName":"splash","backgroundColor":"#ffffff","splashFullScreen":true,"splashImmersive":true}}}' > capacitor.config.json
           fi
 
       # 2. Add Android Platform
@@ -47,39 +54,57 @@ jobs:
           MANIFEST_FILE=android/app/src/main/AndroidManifest.xml
           sed -i '/<manifest/a \    <uses-permission android:name="android.permission.CAMERA" />\n    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />\n    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />' $MANIFEST_FILE
 
-      # 5. FORCE OVERWRITE LOGO & SPLASH (The Fix)
+      # 5. FORCE OVERWRITE LOGO & SPLASH
       - name: Update App Icon & Splash
         run: |
-          echo "Starting Aggressive Icon & Splash Overwrite..."
+          echo "Starting Icon & Splash Overwrite..."
           RES_DIR=android/app/src/main/res
           
-          # A. NUCLEAR FIX: Delete Adaptive Icons so Android uses our PNGs
+          # 1. Determine which file to use for Splash
+          if [ -f splash.png ]; then
+            echo "Custom splash.png found! Using it."
+            SPLASH_SRC=splash.png
+          else
+            echo "No splash.png found. Falling back to logo.png."
+            SPLASH_SRC=logo.png
+          fi
+          
+          # 2. NUCLEAR FIX: Delete Adaptive Icons (Forces Android to use our PNGs)
           rm -rf $RES_DIR/mipmap-anydpi-v26
           
-          # B. LOOP THROUGH ALL DENSITIES
-          # This copies your logo into mdpi, hdpi, xhdpi, xxhdpi, and xxxhdpi folders
+          # 3. LOOP THROUGH ALL DENSITIES
           for density in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
             echo "Updating $density..."
             
-            # 1. Update Launcher Icons
+            # A. Update APP ICONS (Always uses logo.png)
             cp logo.png $RES_DIR/mipmap-$density/ic_launcher.png
             cp logo.png $RES_DIR/mipmap-$density/ic_launcher_round.png
             
-            # 2. Update Splash Screens (Portrait)
-            # We create the folder if it doesn't exist, then copy the file
+            # B. Update SPLASH SCREEN (Uses splash.png)
             mkdir -p $RES_DIR/drawable-port-$density
-            cp logo.png $RES_DIR/drawable-port-$density/splash.png
+            cp $SPLASH_SRC $RES_DIR/drawable-port-$density/splash.png
             
-            # 3. Update Splash Screens (Landscape)
+            # C. Update Landscape Splash
             mkdir -p $RES_DIR/drawable-land-$density
-            cp logo.png $RES_DIR/drawable-land-$density/splash.png
+            cp $SPLASH_SRC $RES_DIR/drawable-land-$density/splash.png
           done
           
-          # C. Update Default Drawable (Fallback)
+          # 4. Update Default Drawable (Fallback)
           mkdir -p $RES_DIR/drawable
-          cp logo.png $RES_DIR/drawable/splash.png
+          cp $SPLASH_SRC $RES_DIR/drawable/splash.png
+
+          # 5. CREATE SPLASH THEME XML (Centers the image for Android 12+)
+          cat <<EOF > $RES_DIR/drawable/splash_background.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+              <item android:drawable="@android:color/white" />
+              <item>
+                  <bitmap android:src="@drawable/splash" android:gravity="center" />
+              </item>
+          </layer-list>
+          EOF
           
-          echo "All images updated successfully."
+          echo "Icons and Splash updated successfully."
 
       # 6. Build APK
       - name: Build APK
