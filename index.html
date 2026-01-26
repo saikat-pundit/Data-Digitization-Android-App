@@ -1276,6 +1276,7 @@ function searchTrackingData(value1, value2 = null, value3 = null) {
         imageContainer.appendChild(loadingDiv);
         
         const img = document.createElement('img');
+        img.referrerPolicy = "no-referrer";
         img.src = url;
         img.alt = alt;
         img.className = 'tracking-image';
@@ -1293,7 +1294,7 @@ function searchTrackingData(value1, value2 = null, value3 = null) {
           img.style.display = 'none';
         };
         
-        img.onclick = () => window.open(url.includes('thumbnail') ? url.replace('thumbnail', 'file') : url, '_blank');
+        img.onclick = () => window.open(url.includes('googleusercontent') ? `https://drive.google.com/file/d/${extractFileId(value)}/view` : url, '_blank');
         imageContainer.appendChild(img);
         td.appendChild(imageContainer);
       };
@@ -1306,7 +1307,7 @@ function searchTrackingData(value1, value2 = null, value3 = null) {
       if (value.includes('https://docs.google.com/uc?export=download&id=')) {
         const fileId = extractFileId(value);
         if (fileId) {
-          handleImagePreview(`https://drive.google.com/thumbnail?id=${fileId}&sz=w800`, headerText);
+          handleImagePreview(`https://lh3.googleusercontent.com/d/${fileId}`, headerText);
         } else {
           td.textContent = value;
         }
@@ -1316,7 +1317,7 @@ function searchTrackingData(value1, value2 = null, value3 = null) {
           const url = match[1];
           const fileId = extractFileId(url);
           if (fileId) {
-            handleImagePreview(`https://drive.google.com/thumbnail?id=${fileId}&sz=w800`, headerText);
+            handleImagePreview(`https://lh3.googleusercontent.com/d/${fileId}`, headerText);
           } else {
             td.textContent = url;
           }
