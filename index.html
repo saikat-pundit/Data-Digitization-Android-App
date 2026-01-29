@@ -886,9 +886,12 @@ function updateStatusCountsOnly(filterValue) {
   
   // Build status counts HTML
   let countsHTML = '<div class="status-counts-container">';
-  countsHTML += `<div class="count-box"><strong>${headers[3]}:</strong> ${uniqueCol3.size}</div>`;
-  countsHTML += `<div class="count-box"><strong>Received:</strong> ${col20FilledCount}</div>`;
-  countsHTML += `<div class="count-box"><strong>${headers[21]}:</strong> VERIFIED: ${col21Status.VERIFIED} | REJECTED: ${col21Status.REJECTED}</div>`;
+  countsHTML += `<div class="count-box"><strong>Elector:</strong> ${uniqueCol3.size}</div>`;
+  countsHTML += `<div class="count-box"><strong>Completed:</strong> ${col20FilledCount}</div>`;
+  countsHTML += `<div class="count-box"><strong>${headers[21]}:</strong>
+  <i class="fa fa-check-circle" style="color: #28a745; margin-right: 5px;"></i>: ${col21Status.VERIFIED} |
+  <i class="fa fa-times-circle" style="color: #dc3545; margin-right: 5px;"></i>: ${col21Status.REJECTED}
+</div>`;
   if(headers[22]) {
     countsHTML += `<div class="count-box"><strong>${headers[22]}:</strong> ${col22FilledCount}</div>`;
   }
