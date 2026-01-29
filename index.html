@@ -139,6 +139,24 @@
         .session-timer {
             font-size: 12px; font-weight: bold; color: #e67e22;
         }
+      .lock-container {
+  background: #f8f9fa;
+  padding: 5px 10px;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+}
+
+.fa-lock, .fa-unlock {
+  transition: all 0.3s ease;
+}
+
+.fa-lock:hover {
+  transform: scale(1.1);
+}
+
+.fa-unlock:hover {
+  transform: rotate(15deg);
+}
     </style>
 </head>
 <body>
@@ -210,6 +228,17 @@ let isCompressing=false;
 let lastMemoryCheck = 0;
 const MEMORY_CHECK_INTERVAL = 1000;
 let pageLoadTime = Date.now();
+const LOCK_STORAGE_KEY = 'csv_lock_state';
+function getLockState() {
+  const saved = localStorage.getItem(LOCK_STORAGE_KEY);
+  return saved ? JSON.parse(saved) : {};
+}
+function saveLockState(state) {
+  localStorage.setItem(LOCK_STORAGE_KEY, JSON.stringify(state));
+}
+function clearLockState() {
+  localStorage.removeItem(LOCK_STORAGE_KEY);
+}    
 function shouldDelayCompression() {
   const now = Date.now();
   if (now - lastMemoryCheck < MEMORY_CHECK_INTERVAL && lastMemoryCheck !== 0) return false;
@@ -378,10 +407,6 @@ function createFormFields(){
 }
 
 function createSearchableDropdown(container, header, columnIndex) {
-  const wrapper = document.createElement('div');
-  wrapper.className = 'searchable-dropdown-wrapper';
-
-  // Error check
   if (!limitedCSVData || limitedCSVData.length === 0) {
     const errorMsg = document.createElement('p');
     errorMsg.textContent = 'Data not loaded yet';
@@ -390,87 +415,119 @@ function createSearchableDropdown(container, header, columnIndex) {
     return;
   }
 
-  // 1. Create Input and Hidden Select
-  const searchInput = document.createElement('input');
-  searchInput.type = 'text';
-  searchInput.className = 'search-input';
-  searchInput.id = `search-${columnIndex}`;
-  searchInput.placeholder = `Search ${header}...`;
-
   const select = document.createElement('select');
   select.name = header;
   select.id = `dropdown-${columnIndex}`;
   select.required = mandatoryIndices.includes(columnIndex);
-  select.style.display = 'none';
+  select.className = 'dropdown-select';
+  select.disabled = true;
 
-  // 2. Create Dropdown List Container (Defined BEFORE use to prevent crash)
-  const dropdownList = document.createElement('div');
-  dropdownList.className = 'dropdown-list';
-  dropdownList.style.display = 'none';
-
-  // 3. Add Default Option
   const def = document.createElement('option');
   def.value = "";
   def.textContent = `-- Select ${header} --`;
   select.appendChild(def);
 
-  // 4. Get Unique Values from CSV (Dynamic Logic for ALL columns, including Index 1)
   const uniqueValues = [...new Set(limitedCSVData.map(row => row[columnIndex]))]
-    .filter(v => v) // Remove empty values
+    .filter(v => v)
     .sort((a, b) => {
-      // Numerical sort if possible, otherwise alphabetical
       const numA = parseInt(a);
       const numB = parseInt(b);
       if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
       return a.localeCompare(b);
     });
 
-  // 5. Populate Options
   uniqueValues.forEach(value => {
-    // Add to Hidden Select
     const opt = document.createElement('option');
     opt.value = value;
     opt.textContent = value;
     select.appendChild(opt);
+  });
 
-    // Add to Visual Dropdown List
-    const item = document.createElement('div');
-    item.className = 'dropdown-item';
-    item.textContent = value;
+  if (columnIndex === 1) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'dropdown-with-lock';
+    wrapper.style.display = 'flex';
+    wrapper.style.alignItems = 'center';
+    wrapper.style.gap = '10px';
+
+    let isLocked = false;
+    let lockedValue = '';
+
+    const lockState = getLockState();
+    const savedLock = lockState[columnIndex];
     
-    item.onclick = () => {
-      select.value = value;
-      searchInput.value = value;
-      dropdownList.style.display = 'none';
-      updateNextDropdowns(columnIndex);
-    };
-    dropdownList.appendChild(item);
-  });
-
-  // 6. Search Functionality
-  searchInput.onfocus = () => {
-    dropdownList.style.display = 'block';
-  };
-  
-  searchInput.oninput = function() {
-    const term = this.value.toLowerCase();
-    dropdownList.querySelectorAll('.dropdown-item').forEach(item => {
-      item.style.display = item.textContent.toLowerCase().includes(term) ? 'block' : 'none';
-    });
-  };
-
-  // 7. Close on Click Outside
-  document.addEventListener('click', (e) => {
-    if (!wrapper.contains(e.target)) {
-      dropdownList.style.display = 'none';
+    if (savedLock && savedLock.isLocked) {
+      isLocked = true;
+      lockedValue = savedLock.value;
+      select.value = lockedValue;
+      select.disabled = true;
+    } else {
+      select.disabled = false;
     }
-  });
 
-  // 8. Append Elements
-  wrapper.appendChild(searchInput);
-  wrapper.appendChild(select);
-  wrapper.appendChild(dropdownList);
-  container.appendChild(wrapper);
+    const lockIcon = document.createElement('i');
+    lockIcon.className = isLocked ? 'fa fa-lock' : 'fa fa-unlock';
+    lockIcon.style.color = isLocked ? '#27ae60' : '#95a5a6';
+    lockIcon.style.cursor = 'pointer';
+    lockIcon.style.fontSize = '18px';
+    lockIcon.title = 'Click to lock/unlock selection';
+
+    lockIcon.onclick = function(e) {
+      e.stopPropagation();
+      
+      if (isLocked) {
+        isLocked = false;
+        lockedValue = '';
+        this.className = 'fa fa-unlock';
+        this.style.color = '#95a5a6';
+        select.disabled = false;
+        select.value = '';
+        
+        const lockState = getLockState();
+        delete lockState[columnIndex];
+        saveLockState(lockState);
+      } else {
+        if (!select.value) {
+          alert('Please select an option first before locking!');
+          return;
+        }
+        
+        isLocked = true;
+        lockedValue = select.value;
+        this.className = 'fa fa-lock';
+        this.style.color = '#27ae60';
+        select.disabled = true;
+        
+        const lockState = getLockState();
+        lockState[columnIndex] = {
+          isLocked: true,
+          value: lockedValue,
+          timestamp: Date.now()
+        };
+        saveLockState(lockState);
+      }
+    };
+
+    if (isLocked && lockedValue) {
+      setTimeout(() => {
+        select.value = lockedValue;
+        updateNextDropdowns(columnIndex);
+      }, 100);
+    }
+
+    select.onchange = function() {
+      if (!isLocked) {
+        updateNextDropdowns(columnIndex);
+      }
+    };
+
+    wrapper.appendChild(select);
+    wrapper.appendChild(lockIcon);
+    container.appendChild(wrapper);
+  } else {
+    select.onchange = () => updateNextDropdowns(columnIndex);
+    container.appendChild(select);
+  }
 }
 
 function createRegularDropdown(container,header,columnIndex){
@@ -696,9 +753,13 @@ function setupFormSubmission(){
       const scriptUrls = [
           'https://script.google.com/macros/s/AKfycbxWFPwah8jBC6RK13Yduk24r5W1Y1yn-OiyIIJSZsTmFiaFvh5o0ILZF1LTtLOsZVfyNQ/exec',
           'https://script.google.com/macros/s/AKfycbx5kRz1YbR7oHdwIDin35pzIKzdbjTUsHsyy_2XGmAXyRn8uqbGEuM8KB6i3AVntiug/exec', 
+          'https://script.google.com/macros/s/AKfycbzsnYlLx7s7QYgC1vngiiU7Wz1vY8Bg1EOzThSpLymTAT0xbw0CRBlfouhA6YBvJEoEng/exec',
+          'https://script.google.com/macros/s/AKfycby4vaROvhOOlHxmUyNCB_sCPHvUJMELmVjVqsNT9TGNZXqPB0f-6pe6PIBJzpoxh6v8/exec',
+          'https://script.google.com/macros/s/AKfycbym-i6FrbJI9vB-TQS9mLg1z0M2hDmg8Fmu4Ws5L9ONf4eQxQ5WWcxKwvpJkXJm3Y5Wbw/exec',
           'https://script.google.com/macros/s/AKfycbwY53QVwqSk8JKznvL02eTqxTQU0pwbfq_Jr_ab8UIDkkTpz5EleTVf5InC28FuVcj_kQ/exec', 
           'https://script.google.com/macros/s/AKfycby_iLHJWeXM5UrfliEt3disbmVJ5rryY5NkNc-mk9jSiiDgDBkKKvgRRrr6XX8fqNbfLg/exec', 
           'https://script.google.com/macros/s/AKfycbzSdAzv36YP5gH6j2Ju0YzrFDS9Q9QOCsFfVBSA6cRzExwP4JMjelcTAlYLYCsMPk65/exec',
+          'https://script.google.com/macros/s/AKfycbxmuQhSG0OmF5eRLl4NBUo933MV8H_K47uhtnZ_NXYUaNVer5IumqybjW38EStoHBpRQg/exec',
           'https://script.google.com/macros/s/AKfycbxoPS2n4V-oWqqnPQ6iJt-apGJAmR83-vxxHfJJ7bpCXWwCzOIGJW1iXgvzQxlcTLNQZw/exec'
       ];
       
@@ -1069,147 +1130,249 @@ function cleanupResources(img, canvas) {
   }
 }
 
-function createTrackingForm(){
-  const trackingForm=document.getElementById('trackingForm');
-  trackingForm.innerHTML='';
-  const dropdownsContainer=document.createElement('div');
-  dropdownsContainer.className='tracking-dropdowns';
-  
-  // --- 1. Column 1 (Dynamic Dropdown) ---
-  const container1=document.createElement('div');
-  container1.className='form-field';
-  const label1=document.createElement('label');
-  label1.textContent=headers[1]+' *';
+function createTrackingForm() {
+  const trackingForm = document.getElementById('trackingForm');
+  trackingForm.innerHTML = '';
+  const dropdownsContainer = document.createElement('div');
+  dropdownsContainer.className = 'tracking-dropdowns';
+
+  // --- 1. Column 1 (Dynamic Dropdown) with Lock ---
+  const container1 = document.createElement('div');
+  container1.className = 'form-field';
+  const label1 = document.createElement('label');
+  label1.textContent = headers[1] + ' *';
   container1.appendChild(label1);
-  
-  const select1=document.createElement('select');
-  select1.id='tracking-dropdown-1';
-  select1.className='tracking-dropdown';
-  select1.innerHTML=`<option value="">-- Select ${headers[1]} --</option>`;
-  
-  // Get Unique Values from CSV for Column 1
-  const uniqueCol1 = [...new Set(limitedCSVData.map(row=>row[1]))]
-    .filter(v=>v)
-    .sort((a,b)=>{
-       const numA=parseInt(a),numB=parseInt(b);
-       if(!isNaN(numA)&&!isNaN(numB)) return numA-numB;
-       return a.localeCompare(b);
+
+  const dropdownWrapper1 = document.createElement('div');
+  dropdownWrapper1.className = 'tracking-dropdown-with-lock';
+  dropdownWrapper1.style.display = 'flex';
+  dropdownWrapper1.style.alignItems = 'center';
+  dropdownWrapper1.style.gap = '10px';
+
+  const select1 = document.createElement('select');
+  select1.id = 'tracking-dropdown-1';
+  select1.className = 'tracking-dropdown';
+  select1.innerHTML = `<option value="">-- Select ${headers[1]} --</option>`;
+
+  const uniqueCol1 = [...new Set(limitedCSVData.map(row => row[1]))]
+    .filter(v => v)
+    .sort((a, b) => {
+      const numA = parseInt(a), numB = parseInt(b);
+      if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+      return a.localeCompare(b);
     });
 
   uniqueCol1.forEach(val => {
-      const opt = document.createElement('option');
-      opt.value = val;
-      opt.textContent = val;
-      select1.appendChild(opt);
+    const opt = document.createElement('option');
+    opt.value = val;
+    opt.textContent = val;
+    select1.appendChild(opt);
   });
-  
+
+  let isTrackingLocked = false;
+  let trackingLockedValue = '';
+
+  const lockState = getLockState();
+  const trackingLockKey = `tracking_${1}`;
+  const savedTrackingLock = lockState[trackingLockKey];
+
+  if (savedTrackingLock && savedTrackingLock.isLocked) {
+  isTrackingLocked = true;
+  trackingLockedValue = savedTrackingLock.value;
+  select1.value = trackingLockedValue;
+  select1.disabled = true; // ADD THIS LINE
+}
+
+  const trackingLockIcon = document.createElement('i');
+  trackingLockIcon.className = isTrackingLocked ? 'fa fa-lock' : 'fa fa-unlock';
+  trackingLockIcon.style.color = isTrackingLocked ? '#27ae60' : '#95a5a6';
+  trackingLockIcon.style.cursor = 'pointer';
+  trackingLockIcon.style.fontSize = '18px';
+  trackingLockIcon.title = 'Click to lock/unlock selection for tracking';
+
+  trackingLockIcon.onclick = function (e) {
+  e.stopPropagation();
+
+  if (isTrackingLocked) {
+    // UNLOCK LOGIC - Keep as is
+    isTrackingLocked = false;
+    trackingLockedValue = '';
+    this.className = 'fa fa-unlock';
+    this.style.color = '#95a5a6';
+    select1.disabled = false;
+
+    for (let i = 2; i <= 3; i++) {
+      const downstreamSelect = document.getElementById(`tracking-dropdown-${i}`);
+      if (downstreamSelect) {
+        downstreamSelect.innerHTML = `<option value="">-- Select ${headers[i]} --</option>`;
+        downstreamSelect.disabled = true;
+      }
+    }
+    document.getElementById('trackingResults').innerHTML = '';
+
+    const lockState = getLockState();
+    delete lockState[trackingLockKey];
+    saveLockState(lockState);
+    
+    // Enable dropdown after unlocking
+    select1.disabled = false;
+  } else {
+    // LOCK LOGIC - Add disable dropdown
+    if (!select1.value) {
+      alert('Please select an option first before locking!');
+      return;
+    }
+
+    isTrackingLocked = true;
+    trackingLockedValue = select1.value;
+    this.className = 'fa fa-lock';
+    this.style.color = '#27ae60';
+    
+    // Disable dropdown when locked
+    select1.disabled = true;
+
+    const lockState = getLockState();
+    lockState[trackingLockKey] = {
+      isLocked: true,
+      value: trackingLockedValue,
+      timestamp: Date.now()
+    };
+    saveLockState(lockState);
+
+    if (select1.value) {
+      updateTrackingDropdown(2);
+    }
+  }
+};
+
+  if (isTrackingLocked && trackingLockedValue) {
+    setTimeout(() => {
+      select1.value = trackingLockedValue;
+      updateTrackingDropdown(2);
+    }, 100);
+  }
+
   select1.onchange = () => {
-     updateTrackingDropdown(2); // Trigger update for next dropdown
+    if (!isTrackingLocked) {
+      updateTrackingDropdown(2);
+    }
   };
-  container1.appendChild(select1);
+
+  dropdownWrapper1.appendChild(select1);
+  dropdownWrapper1.appendChild(trackingLockIcon);
+  container1.appendChild(dropdownWrapper1);
   dropdownsContainer.appendChild(container1);
 
   // --- 2. Column 2 ---
-  const container2=document.createElement('div');
-  container2.className='form-field';
-  const label2=document.createElement('label');
-  label2.textContent=headers[2];
+  const container2 = document.createElement('div');
+  container2.className = 'form-field';
+  const label2 = document.createElement('label');
+  label2.textContent = headers[2];
   container2.appendChild(label2);
-  
-  const select2=document.createElement('select');
-  select2.id='tracking-dropdown-2';
-  select2.className='tracking-dropdown';
-  select2.disabled=true;
-  select2.innerHTML=`<option value="">-- Select ${headers[2]} --</option>`;
-  
-  select2.onchange=()=>{
-      updateTrackingDropdown(3);
+
+  const select2 = document.createElement('select');
+  select2.id = 'tracking-dropdown-2';
+  select2.className = 'tracking-dropdown';
+  select2.disabled = true;
+  select2.innerHTML = `<option value="">-- Select ${headers[2]} --</option>`;
+
+  select2.onchange = () => {
+    updateTrackingDropdown(3);
   };
   container2.appendChild(select2);
   dropdownsContainer.appendChild(container2);
 
   // --- 3. Column 3 ---
-  const container3=document.createElement('div');
-  container3.className='form-field';
-  const label3=document.createElement('label');
-  label3.textContent=headers[3];
+  const container3 = document.createElement('div');
+  container3.className = 'form-field';
+  const label3 = document.createElement('label');
+  label3.textContent = headers[3];
   container3.appendChild(label3);
-  
-  const select3=document.createElement('select');
-  select3.id='tracking-dropdown-3';
-  select3.className='tracking-dropdown';
-  select3.disabled=true;
-  select3.innerHTML=`<option value="">-- Select ${headers[3]} --</option>`;
-  
-  select3.onchange=()=>{
+
+  const select3 = document.createElement('select');
+  select3.id = 'tracking-dropdown-3';
+  select3.className = 'tracking-dropdown';
+  select3.disabled = true;
+  select3.innerHTML = `<option value="">-- Select ${headers[3]} --</option>`;
+
+  select3.onchange = () => {
     const val1 = document.getElementById('tracking-dropdown-1').value;
     const val2 = document.getElementById('tracking-dropdown-2').value;
     const val3 = select3.value;
-    if(val1 && val2 && val3) searchTrackingData(val1, val2, val3);
+    if (val1 && val2 && val3) searchTrackingData(val1, val2, val3);
   };
   container3.appendChild(select3);
   dropdownsContainer.appendChild(container3);
-  
+
   trackingForm.appendChild(dropdownsContainer);
 }
 
-function updateTrackingDropdown(columnIndex){
-  const select=document.getElementById(`tracking-dropdown-${columnIndex}`);
-  if(!select) return;
-  
-  select.innerHTML=`<option value="">-- Select ${headers[columnIndex]} --</option>`;
-  select.disabled=true;
-  
-  const filters={};
-  
-  // Dynamic Filtering based on previous selections
-  if(columnIndex === 2) {
-      const val1 = document.getElementById('tracking-dropdown-1').value;
-      if(val1) filters[1] = val1;
-      else return; // Don't populate if parent is empty
-  }
-  else if(columnIndex === 3) {
-      const val1 = document.getElementById('tracking-dropdown-1').value;
-      const val2 = document.getElementById('tracking-dropdown-2').value;
-      if(val1) filters[1] = val1;
-      if(val2) filters[2] = val2;
-      else return;
-  }
+function updateTrackingDropdown(columnIndex) {
+  const select = document.getElementById(`tracking-dropdown-${columnIndex}`);
+  if (!select) return;
 
-  const filteredRows=limitedCSVData.filter(row=>Object.keys(filters).every(k=>row[k]===filters[k]));
-  
-  const uniqueValues=[...new Set(filteredRows.map(row=>row[columnIndex]))].filter(v=>v).sort((a,b)=>{
-    const numA=parseInt(a),numB=parseInt(b);
-    if(!isNaN(numA)&&!isNaN(numB)) return numA-numB;
-    return a.localeCompare(b);
-  });
-  
-  if(uniqueValues.length>0){
-    select.disabled=false;
-    uniqueValues.forEach(value=>{
-        const opt=document.createElement('option');
-        opt.value=value;
-        opt.textContent=value;
-        select.appendChild(opt);
-    });
-    
-    // Reset downstream dropdowns
-    for(let i=columnIndex+1;i<=3;i++){
-      const downstreamSelect=document.getElementById(`tracking-dropdown-${i}`);
-      if(downstreamSelect){
-          downstreamSelect.innerHTML=`<option value="">-- Select ${headers[i]} --</option>`;
-          downstreamSelect.disabled=true;
+  select.innerHTML = `<option value="">-- Select ${headers[columnIndex]} --</option>`;
+  select.disabled = true;
+
+  if (columnIndex === 2) {
+    const trackingLockKey = `tracking_${1}`;
+    const lockState = getLockState();
+    const savedTrackingLock = lockState[trackingLockKey];
+
+    if (savedTrackingLock && savedTrackingLock.isLocked) {
+      const select1 = document.getElementById('tracking-dropdown-1');
+      if (select1.value !== savedTrackingLock.value) {
+        select1.value = savedTrackingLock.value;
       }
     }
-    
-    document.getElementById('trackingResults').innerHTML='';
-    
-    // Auto-select if only one option exists
-    if(uniqueValues.length===1){
-        select.value=uniqueValues[0];
-        // Trigger change for the next level manually
-        if(columnIndex < 3) updateTrackingDropdown(columnIndex + 1);
-        else select.onchange(); 
+  }
+
+  const filters = {};
+
+  if (columnIndex === 2) {
+    const val1 = document.getElementById('tracking-dropdown-1').value;
+    if (val1) filters[1] = val1;
+    else return;
+  }
+  else if (columnIndex === 3) {
+    const val1 = document.getElementById('tracking-dropdown-1').value;
+    const val2 = document.getElementById('tracking-dropdown-2').value;
+    if (val1) filters[1] = val1;
+    if (val2) filters[2] = val2;
+    else return;
+  }
+
+  const filteredRows = limitedCSVData.filter(row => Object.keys(filters).every(k => row[k] === filters[k]));
+
+  const uniqueValues = [...new Set(filteredRows.map(row => row[columnIndex]))].filter(v => v).sort((a, b) => {
+    const numA = parseInt(a), numB = parseInt(b);
+    if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+    return a.localeCompare(b);
+  });
+
+  if (uniqueValues.length > 0) {
+    select.disabled = false;
+    uniqueValues.forEach(value => {
+      const opt = document.createElement('option');
+      opt.value = value;
+      opt.textContent = value;
+      select.appendChild(opt);
+    });
+
+    for (let i = columnIndex + 1; i <= 3; i++) {
+      const downstreamSelect = document.getElementById(`tracking-dropdown-${i}`);
+      if (downstreamSelect) {
+        downstreamSelect.innerHTML = `<option value="">-- Select ${headers[i]} --</option>`;
+        downstreamSelect.disabled = true;
+      }
+    }
+
+    document.getElementById('trackingResults').innerHTML = '';
+
+    if (uniqueValues.length === 1) {
+      select.value = uniqueValues[0];
+      if (columnIndex < 3) updateTrackingDropdown(columnIndex + 1);
+      else select.onchange();
     }
   }
 }
