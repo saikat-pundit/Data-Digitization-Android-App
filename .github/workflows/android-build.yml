@@ -23,20 +23,49 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      # 1. Prepare Web Assets
+      # 1. Prepare Web Assets & Configure Remote Loading
       - name: Prepare Web Assets
         run: |
           mkdir www
-          mv index.html www/
           
-          # Move images if they exist
+          # Create a fallback HTML file (Required for build to pass)
+          # This is only seen if the user has NO internet connection
+          echo '<!DOCTYPE html><html><body style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;text-align:center;"><div><h1>Connection Error</h1><p>Please check your internet and restart the app.</p></div></body></html>' > www/index.html
+          
+          # Move images if they exist (For Native Splash/Icons)
           if [ -f logo.png ]; then cp logo.png www/; fi
           if [ -f splash.png ]; then cp splash.png www/; fi
           
-          # Ensure capacitor config exists with Splash settings
-          if [ ! -f capacitor.config.json ]; then
-            echo '{"appId":"com.aero.app","appName":"AERO","webDir":"www","plugins":{"SplashScreen":{"launchShowDuration":3000,"androidSplashResourceName":"splash","backgroundColor":"#ffffff","splashFullScreen":true,"splashImmersive":true}}}' > capacitor.config.json
-          fi
+          # --- CONFIGURATION: REMOTE URL & SPINNER ---
+          # 1. 'url': The website to load.
+          # 2. 'showSpinner': true -> Shows the native circle.
+          # 3. 'launchShowDuration': 10000 -> Max wait time (10s). Auto-hides sooner if site loads.
+          
+          cat <<EOF > capacitor.config.json
+          {
+            "appId": "com.aero.app",
+            "appName": "AERO",
+            "webDir": "www",
+            "server": {
+              "url": "https://raw.githubusercontent.com/saikat-pundit/Data-Digitization-Android-App/refs/heads/main/index.html",
+              "allowNavigation": ["*"],
+              "cleartext": true
+            },
+            "plugins": {
+              "SplashScreen": {
+                "launchShowDuration": 10000,
+                "launchAutoHide": true,
+                "backgroundColor": "#ffffff",
+                "androidSplashResourceName": "splash",
+                "showSpinner": true,
+                "androidSpinnerStyle": "large",
+                "spinnerColor": "#2c3e50",
+                "splashFullScreen": true,
+                "splashImmersive": true
+              }
+            }
+          }
+          EOF
 
       # 2. Add Android Platform
       - name: Add Android Platform
@@ -60,7 +89,7 @@ jobs:
           echo "Starting Icon & Splash Overwrite..."
           RES_DIR=android/app/src/main/res
           
-          # 1. Determine which file to use for Splash
+          # Determine which file to use for Splash
           if [ -f splash.png ]; then
             echo "Custom splash.png found! Using it."
             SPLASH_SRC=splash.png
@@ -69,18 +98,16 @@ jobs:
             SPLASH_SRC=logo.png
           fi
           
-          # 2. NUCLEAR FIX: Delete Adaptive Icons (Forces Android to use our PNGs)
+          # Delete Adaptive Icons (Forces Android to use our PNGs)
           rm -rf $RES_DIR/mipmap-anydpi-v26
           
-          # 3. LOOP THROUGH ALL DENSITIES
+          # LOOP THROUGH DENSITIES
           for density in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
-            echo "Updating $density..."
-            
             # A. Update APP ICONS (Always uses logo.png)
             cp logo.png $RES_DIR/mipmap-$density/ic_launcher.png
             cp logo.png $RES_DIR/mipmap-$density/ic_launcher_round.png
             
-            # B. Update SPLASH SCREEN (Uses splash.png)
+            # B. Update SPLASH SCREEN
             mkdir -p $RES_DIR/drawable-port-$density
             cp $SPLASH_SRC $RES_DIR/drawable-port-$density/splash.png
             
@@ -89,11 +116,11 @@ jobs:
             cp $SPLASH_SRC $RES_DIR/drawable-land-$density/splash.png
           done
           
-          # 4. Update Default Drawable (Fallback)
+          # Update Default Drawable (Fallback)
           mkdir -p $RES_DIR/drawable
           cp $SPLASH_SRC $RES_DIR/drawable/splash.png
 
-          # 5. CREATE SPLASH THEME XML (Centers the image for Android 12+)
+          # CREATE SPLASH THEME XML (Centers the image for Android 12+)
           cat <<EOF > $RES_DIR/drawable/splash_background.xml
           <?xml version="1.0" encoding="utf-8"?>
           <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
