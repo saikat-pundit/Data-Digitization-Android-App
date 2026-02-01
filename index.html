@@ -703,53 +703,111 @@ function setupFormSubmission(){
       modal.style.display = 'none';
     };
   };
-  window.finalSubmit=async function(){
-    const modal = document.getElementById('confirmModal');
-    const modalContent = modal.querySelector('.modal-content');
-    let seconds=30;
-    modalContent.innerHTML=`<div style="text-align:center;padding:20px;"><h3>Uploading...</h3><div class="timer-display" id="timer">30</div><p>seconds remaining</p><div class="progress-container"><div class="progress-bar" id="progressBar"></div></div><div class="upload-status" id="uploadStatus">Preparing upload...</div></div>`;
-    
-    const timerInterval=setInterval(()=>{
-      seconds--;
-      if(document.getElementById('timer')){
-        document.getElementById('timer').textContent=seconds;
-        const progress=((30-seconds)/30)*100;
-        document.getElementById('progressBar').style.width=progress+'%';
-        document.getElementById('uploadStatus').textContent=`Uploading... ${Math.round(progress)}% complete`;
+  window.finalSubmit = async function() {
+  const modal = document.getElementById('confirmModal');
+  const modalContent = modal.querySelector('.modal-content');
+  
+  // 1. Calculate Total Data Size (for "Intelligent" Speed display)
+  let totalSizeKB = 0;
+  limitedHeaders.forEach((h, i) => {
+      const fileInp = document.getElementById(`file-${i}`);
+      if (fileInp && fileInp.compressedFile) {
+          totalSizeKB += fileInp.compressedFile.size / 1024;
       }
-      if(seconds<=0) clearInterval(timerInterval);
-    },1000);
-    
-    try{
-      const payload={}; 
-      const totalFields=headers.length; 
-      let processedFields=0;
+  });
+  // Add ~5KB overhead for text data
+  totalSizeKB += 5; 
+  const totalMB = (totalSizeKB / 1024).toFixed(2);
+  const avgSpeed = (totalSizeKB / 30).toFixed(0); // KB/s based on 30s timer
+
+  let seconds = 30;
+  
+  // Update Modal HTML with new Stats Container
+  modalContent.innerHTML = `
+    <div style="text-align:center;padding:20px;">
+      <h3 style="color:#2c3e50; margin-bottom:5px;">Uploading Securely...</h3>
       
-      for(let i=0;i<totalFields;i++){
-        const h=headers[i];
-        const drop=document.getElementById(`dropdown-${i}`);
-        const fileInp=document.getElementById(`file-${i}`);
-        const txt=form.querySelector(`textarea[name="${h}"]`);
-        
-        if(drop) payload[h]=drop.value;
-        else if(txt) payload[h]=txt.value;
-        else if(fileInp&&(fileInp.compressedFile||fileInp.files[0])){
-          const file=fileInp.compressedFile||fileInp.files[0];
-          const b64=await fileToBase64(file);
-          const nInp=document.getElementById(`docname-${i}`);
-          payload[h]=nInp&&nInp.value.trim()!==""?`${b64}|${nInp.value.trim()}`:b64;
-        }
-        
-        processedFields++;
-        const progressPercent=(processedFields/totalFields)*50;
-        document.getElementById('progressBar').style.width=progressPercent+'%';
-        document.getElementById('uploadStatus').textContent=`Processing data... ${Math.round(progressPercent)}%`;
+      <div id="netStats" style="background:#f8f9fa; border-radius:8px; padding:8px; margin:10px 0; font-size:13px; color:#555; display:flex; justify-content:space-around; align-items:center;">
+         <span id="netType"><i class="fa fa-refresh fa-spin"></i> Analyzing Network...</span>
+         <span id="netSpeed" style="font-weight:bold;">0 KB/s</span>
+      </div>
+
+      <div class="timer-display" id="timer" style="font-size:36px; color:#3498db;">30</div>
+      <p style="margin:0; color:#999; font-size:12px;">seconds remaining</p>
+      
+      <div class="progress-container" style="height:12px; background:#e0e0e0; margin:15px 0;">
+        <div class="progress-bar" id="progressBar" style="height:100%; background:linear-gradient(90deg, #3498db, #2ecc71);"></div>
+      </div>
+      
+      <div class="upload-status" id="uploadStatus" style="font-size:14px; font-weight:600;">Initializing...</div>
+    </div>`;
+
+  const timerInterval = setInterval(() => {
+    seconds--;
+    if (document.getElementById('timer')) {
+      document.getElementById('timer').textContent = seconds;
+      
+      const progress = ((30 - seconds) / 30) * 100;
+      document.getElementById('progressBar').style.width = progress + '%';
+      
+      // --- INTELLIGENT NETWORK LOGIC ---
+      const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+      let netIcon = '<i class="fa fa-wifi"></i>';
+      let netColor = '#27ae60'; // Green
+      let netText = 'WiFi/4G';
+      
+      if (conn) {
+          const type = conn.effectiveType ? conn.effectiveType.toUpperCase() : '4G';
+          if (type.includes('2G')) {
+              netColor = '#e74c3c'; // Red for weak signal
+              netIcon = '<i class="fa fa-exclamation-triangle"></i>';
+              netText = `${type} (Weak)`;
+          } else if (type.includes('3G')) {
+              netColor = '#f39c12'; // Orange
+              netIcon = '<i class="fa fa-signal"></i>';
+              netText = `${type} (Moderate)`;
+          } else {
+              netText = `${type} (Strong)`;
+          }
       }
-      
-      compressionQueue=[];
-      isCompressing=false;
-      
-      document.getElementById('uploadStatus').textContent='Sending to server...';
+
+      // Update UI with calculated stats
+      document.getElementById('netType').innerHTML = `<span style="color:${netColor}">${netIcon} ${netText}</span>`;
+      document.getElementById('netSpeed').textContent = `${avgSpeed} KB/s`;
+      document.getElementById('uploadStatus').textContent = `Sending ${totalMB} MB of data... ${Math.round(progress)}%`;
+    }
+    
+    if (seconds <= 0) clearInterval(timerInterval);
+  }, 1000);
+
+  try {
+    const payload = {};
+    const totalFields = headers.length;
+    let processedFields = 0;
+
+    for (let i = 0; i < totalFields; i++) {
+      const h = headers[i];
+      const drop = document.getElementById(`dropdown-${i}`);
+      const fileInp = document.getElementById(`file-${i}`);
+      const txt = form.querySelector(`textarea[name="${h}"]`);
+
+      if (drop) payload[h] = drop.value;
+      else if (txt) payload[h] = txt.value;
+      else if (fileInp && (fileInp.compressedFile || fileInp.files[0])) {
+        const file = fileInp.compressedFile || fileInp.files[0];
+        const b64 = await fileToBase64(file);
+        const nInp = document.getElementById(`docname-${i}`);
+        payload[h] = nInp && nInp.value.trim() !== "" ? `${b64}|${nInp.value.trim()}` : b64;
+      }
+
+      processedFields++;
+      // Just update the status text, let the timer handle the visual bar for smoothness
+    }
+
+    compressionQueue = [];
+    isCompressing = false;
+
+    document.getElementById('uploadStatus').textContent = 'Finalizing...';
       const scriptUrls = [
           'https://script.google.com/macros/s/AKfycbxWFPwah8jBC6RK13Yduk24r5W1Y1yn-OiyIIJSZsTmFiaFvh5o0ILZF1LTtLOsZVfyNQ/exec',
           'https://script.google.com/macros/s/AKfycbx5kRz1YbR7oHdwIDin35pzIKzdbjTUsHsyy_2XGmAXyRn8uqbGEuM8KB6i3AVntiug/exec', 
@@ -762,37 +820,38 @@ function setupFormSubmission(){
           'https://script.google.com/macros/s/AKfycbxmuQhSG0OmF5eRLl4NBUo933MV8H_K47uhtnZ_NXYUaNVer5IumqybjW38EStoHBpRQg/exec',
           'https://script.google.com/macros/s/AKfycbxoPS2n4V-oWqqnPQ6iJt-apGJAmR83-vxxHfJJ7bpCXWwCzOIGJW1iXgvzQxlcTLNQZw/exec'
       ];
-      
       const randomUrl = scriptUrls[Math.floor(Math.random() * scriptUrls.length)];
+    await fetch(randomUrl, {
+      method: 'POST',
+      mode: 'no-cors',
+      body: JSON.stringify(payload)
+    });
+
+    document.getElementById('progressBar').style.width = '100%';
+    document.getElementById('uploadStatus').textContent = 'Upload complete!';
+    clearInterval(timerInterval);
+
+    setTimeout(() => {
+      alert("Success! Data Uploaded.");
       
-      await fetch(randomUrl, {
-        method:'POST',
-        mode:'no-cors',
-        body:JSON.stringify(payload)
-      });
+      // Cleanup Memory
+      freeUpMemory();
       
-      document.getElementById('progressBar').style.width='100%'; 
-      document.getElementById('uploadStatus').textContent='Upload complete!';
-      clearInterval(timerInterval);
-      
-      setTimeout(()=>{ 
-        alert("Success! Data Uploaded."); 
-        freeUpMemory(); 
-        document.getElementById('confirmModal').style.display = 'none';
-        location.reload(); 
-      }, 100);
-      
-    } catch(err){
-      document.getElementById('uploadStatus').textContent='Upload failed!'; 
-      document.getElementById('progressBar').style.background='#ff4444';
-      clearInterval(timerInterval);
-      
-      setTimeout(()=>{ 
-        alert("Error: "+err.message); 
-        location.reload(); 
-      },100);
-    }
-  };
+      document.getElementById('confirmModal').style.display = 'none';
+      location.reload(); 
+    }, 100);
+
+  } catch (err) {
+    document.getElementById('uploadStatus').textContent = 'Upload failed!';
+    document.getElementById('progressBar').style.background = '#ff4444';
+    clearInterval(timerInterval);
+
+    setTimeout(() => {
+      alert("Error: " + err.message);
+      location.reload();
+    }, 100);
+  }
+};
 }
 
 // ... [Tracking and Status Functions Preserved Below] ...
