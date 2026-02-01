@@ -1865,8 +1865,11 @@ function startAppSession(loginTime) {
         } else {
             const minutes = Math.floor(timeLeft / 60000);
             const seconds = Math.floor((timeLeft % 60000) / 1000);
-            document.getElementById('sessionTimer').innerText = 
-                `Session Left: ${minutes}m ${seconds}s`;
+            // FIX: Use the new ID 'sessionTimerText'
+const timerElement = document.getElementById('sessionTimerText');
+if(timerElement) {
+    timerElement.innerText = `Time Left: ${minutes}m ${seconds}s`;
+}
         }
         const timeSinceRefresh = now - pageLoadTime;
         const cleanupInterval = 15 * 60 * 1000; // 15 Minutes
