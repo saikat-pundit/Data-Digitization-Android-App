@@ -1976,32 +1976,42 @@ function startNetworkMonitor() {
     }, 5000); // Check every 5 seconds
 }
 
-function updateNetworkUI(latency, status) {
-    const badge = document.getElementById('networkBadge');
-    const text = document.getElementById('networkText');
+function updateHeaderStats(latency, status) {
+    const netEl = document.getElementById('infoNet');
+    const txtEl = document.getElementById('netText');
+    const spdEl = document.getElementById('speedText');
     
-    // Remove old classes
-    badge.classList.remove('net-good', 'net-avg', 'net-bad');
-
-    // Get Connection Type (4G, WiFi, etc.)
+    // 1. Get Network Type & Bandwidth
     const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
     const type = conn ? (conn.effectiveType || '4G').toUpperCase() : 'NET';
-
-    if (status === 'offline') {
-        badge.classList.add('net-bad');
-        text.innerHTML = `<i class="fa fa-wifi-slash"></i> Offline`;
-    } else if (latency > 1500) {
-        // Weak Signal
-        badge.classList.add('net-bad');
-        text.innerHTML = `${type} • ${latency}ms (Weak)`;
-    } else if (latency > 500) {
-        // Average Signal
-        badge.classList.add('net-avg');
-        text.innerHTML = `${type} • ${latency}ms`;
+    
+    // browser only gives Downlink. We estimate Uplink (approx 1/3 of down is standard for 4G)
+    const down = conn ? conn.downlink : 0; 
+    const up = conn ? (conn.downlink / 3).toFixed(1) : 0; 
+    
+    // 2. Format Speed Text with Arrows
+    if(status === 'offline'){
+         spdEl.innerHTML = "No Connection";
     } else {
-        // Good Signal
-        badge.classList.add('net-good');
-        text.innerHTML = `${type} • ${latency}ms`;
+         // Shows: ↓ 9.0 • ↑ 3.0 Mbps
+         spdEl.innerHTML = `↓ ${down} • ↑ ${up} Mbps`;
+    }
+
+    // 3. Format Ping/Type Text
+    netEl.classList.remove('status-good', 'status-avg', 'status-bad');
+    
+    if (status === 'offline') {
+        netEl.classList.add('status-bad');
+        txtEl.innerHTML = `OFFLINE`;
+    } else if (latency > 1500 || type.includes('2G')) {
+        netEl.classList.add('status-bad');
+        txtEl.innerHTML = `${type} • ${latency}ms (Weak)`;
+    } else if (latency > 500 || type.includes('3G')) {
+        netEl.classList.add('status-avg');
+        txtEl.innerHTML = `${type} • ${latency}ms`;
+    } else {
+        netEl.classList.add('status-good');
+        txtEl.innerHTML = `${type} • ${latency}ms`;
     }
 }
 
