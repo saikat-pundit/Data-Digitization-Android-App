@@ -23,23 +23,100 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      # 1. Prepare Web Assets & Configure Remote Loading
+      # 1. Prepare Web Assets (Smart Shell Mode)
       - name: Prepare Web Assets
         run: |
-          mkdir www
+          mkdir -p www
           
-          # Create a fallback HTML file (Required for build to pass)
-          # This is only seen if the user has NO internet connection
-          echo '<!DOCTYPE html><html><body style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;text-align:center;"><div><h1>Connection Error</h1><p>Please check your internet and restart the app.</p></div></body></html>' > www/index.html
+          # --- 1. CREATE THE SMART LAUNCHER (Local index.html) ---
+          # This file lives on the phone. It handles errors and redirects.
+          cat <<EOF > www/index.html
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>AERO Launcher</title>
+              <style>
+                  body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background: #f0f2f5; height: 100vh; display: flex; justify-content: center; align-items: center; user-select: none; }
+                  
+                  /* --- LOADER SCREEN --- */
+                  #loading-screen { text-align: center; transition: opacity 0.5s; }
+                  .spinner { width: 50px; height: 50px; border: 5px solid #e0e0e0; border-top: 5px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+                  
+                  /* --- ERROR SCREEN (Hidden by default) --- */
+                  #error-screen { display: none; flex-direction: column; align-items: center; text-align: center; padding: 30px; background: white; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 80%; animation: popup 0.3s ease-out; }
+                  .error-icon { font-size: 50px; color: #e74c3c; margin-bottom: 15px; }
+                  .retry-btn { background: #3498db; color: white; border: none; padding: 12px 30px; border-radius: 25px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 20px; transition: transform 0.2s; box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3); }
+                  .retry-btn:active { transform: scale(0.95); }
+                  
+                  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                  @keyframes popup { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+              </style>
+          </head>
+          <body>
+              
+              <div id="loading-screen">
+                  <div class="spinner"></div>
+                  <h3 style="color:#555;">Connecting securely...</h3>
+              </div>
+
+              <div id="error-screen">
+                  <div class="error-icon">⚠️</div>
+                  <h2 style="margin:0; color:#333;">Connection Failed</h2>
+                  <p style="color:#666; margin-top:10px;">We couldn't reach the server. Please check your internet.</p>
+                  <button class="retry-btn" onclick="checkConnection()">Try Again</button>
+              </div>
+
+              <script>
+                  // --- CONFIGURATION ---
+                  const REMOTE_URL = "https://raw.githubusercontent.com/saikat-pundit/Data-Digitization-Android-App/refs/heads/main/index.html"; // <--- PUT YOUR URL HERE
+                  
+                  function checkConnection() {
+                      // 1. Reset UI to Loading State
+                      document.getElementById('error-screen').style.display = 'none';
+                      document.getElementById('loading-screen').style.display = 'block';
+
+                      // 2. Simple Network Check
+                      // We try to fetch the site (HEAD request is fast). 
+                      // 'no-cors' mode is required to allow checking remote domains without crashing.
+                      fetch(REMOTE_URL, { method: 'HEAD', mode: 'no-cors' })
+                      .then(() => {
+                          // SUCCESS: Internet is good. Launch the app.
+                          // 'location.replace' replaces the history so back button exits app, doesn't go back to loader.
+                          window.location.replace(REMOTE_URL);
+                      })
+                      .catch(() => {
+                          // FAILURE: Show Error Screen
+                          showError();
+                      });
+                      
+                      // Fallback: If fetch hangs forever (rare), show error after 10 seconds
+                      setTimeout(() => {
+                          if(document.getElementById('loading-screen').style.display !== 'none') showError();
+                      }, 10000);
+                  }
+
+                  function showError() {
+                      document.getElementById('loading-screen').style.display = 'none';
+                      document.getElementById('error-screen').style.display = 'flex';
+                  }
+
+                  // Run immediately on open
+                  window.onload = checkConnection;
+              </script>
+          </body>
+          </html>
+          EOF
           
-          # Move images if they exist (For Native Splash/Icons)
+          # Move images (Logo & Splash)
           if [ -f logo.png ]; then cp logo.png www/; fi
           if [ -f splash.png ]; then cp splash.png www/; fi
           
-          # --- CONFIGURATION: REMOTE URL & SPINNER ---
-          # 1. 'url': The website to load.
-          # 2. 'showSpinner': true -> Shows the native circle.
-          # 3. 'launchShowDuration': 10000 -> Max wait time (10s). Auto-hides sooner if site loads.
+          # --- 2. CAPACITOR CONFIG (LOCAL MODE) ---
+          # IMPORTANT: We DO NOT put 'server.url' here. 
+          # We let the app load the local 'www/index.html' we just created above.
+          # We enable 'allowNavigation' so the local file is allowed to redirect to your website.
           
           cat <<EOF > capacitor.config.json
           {
@@ -47,19 +124,16 @@ jobs:
             "appName": "AERO",
             "webDir": "www",
             "server": {
-              "url": "https://raw.githubusercontent.com/saikat-pundit/Data-Digitization-Android-App/refs/heads/main/index.html",
               "allowNavigation": ["*"],
               "cleartext": true
             },
             "plugins": {
               "SplashScreen": {
-                "launchShowDuration": 10000,
+                "launchShowDuration": 2000, 
                 "launchAutoHide": true,
-                "backgroundColor": "#ffffff",
+                "backgroundColor": "#f0f2f5",
                 "androidSplashResourceName": "splash",
-                "showSpinner": true,
-                "androidSpinnerStyle": "large",
-                "spinnerColor": "#2c3e50",
+                "showSpinner": false,
                 "splashFullScreen": true,
                 "splashImmersive": true
               }
