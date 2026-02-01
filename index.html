@@ -126,22 +126,79 @@
             border: none; border-radius: 6px; font-size: 16px; font-weight: bold;
         }
         
-        /* --- HEADER CONTROLS --- */
-        /* --- UPDATED HEADER STYLES --- */
+        /* --- GLASSMORPHIC HEADER --- */
 .header-controls {
     display: grid;
     grid-template-columns: 1fr auto;
     gap: 10px;
     background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px); /* Glass effect */
-    padding: 12px 16px;
+    backdrop-filter: blur(10px);
+    padding: 10px 16px;
     border-radius: 16px;
     margin-bottom: 20px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.06);
     border: 1px solid rgba(255,255,255,0.5);
     align-items: center;
+    min-height: 50px; /* Prevents jumping during rotation */
 }
 
+/* --- ROTATING INFO CAROUSEL --- */
+.info-display {
+    position: relative;
+    height: 20px; /* Fixed height for the text */
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+}
+
+.info-item {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 13px;
+    font-weight: 600;
+    color: #2c3e50;
+    white-space: nowrap;
+}
+
+/* Active State (Visible) */
+.info-item.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Specific Styles for Metrics */
+.timer-text { color: #e67e22; font-weight: 700; letter-spacing: 0.5px; }
+.net-text   { color: #2c3e50; }
+.speed-text { color: #3498db; }
+
+.ping-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #bdc3c7;
+    box-shadow: 0 0 0 2px rgba(189, 195, 199, 0.2);
+}
+
+/* Network Health Colors */
+.status-good { color: #27ae60; }
+.status-good .ping-dot { background-color: #27ae60; box-shadow: 0 0 0 2px rgba(39,174,96,0.2); }
+.status-avg  { color: #f39c12; }
+.status-avg .ping-dot  { background-color: #f39c12; box-shadow: 0 0 0 2px rgba(243,156,18,0.2); }
+.status-bad  { color: #e74c3c; animation: flash-text 1s infinite; }
+.status-bad .ping-dot  { background-color: #e74c3c; box-shadow: 0 0 0 2px rgba(231,76,60,0.2); }
+
+@keyframes flash-text { 50% { opacity: 0.5; } }
+
+/* Refresh Button */
 .refresh-btn {
     background: linear-gradient(135deg, #f8f9fa, #e9ecef);
     border: 1px solid #dee2e6;
@@ -149,81 +206,12 @@
     font-size: 14px;
     cursor: pointer;
     color: #2c3e50;
-    padding: 10px 16px;
+    padding: 8px 14px;
     font-weight: 600;
-    transition: all 0.2s ease;
     display: flex;
-    align-items: center;
-    gap: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-
-.refresh-btn:hover {
-    background: white;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    color: #27ae60;
-}
-
-.refresh-btn:active {
-    transform: scale(0.96);
-}
-
-/* Container for Timer + Network Stats */
-.info-group {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.session-timer {
-    font-size: 11px;
-    font-weight: 700;
-    color: #95a5a6;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-/* --- NETWORK STATS STYLING --- */
-.network-badge {
-    display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-size: 13px;
-    font-weight: 600;
-    color: #2c3e50;
-    padding: 4px 8px;
-    background: #f1f3f5;
-    border-radius: 6px;
-    width: fit-content;
-    transition: background 0.3s;
-}
-
-.ping-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background-color: #bdc3c7; /* Default Grey */
-    box-shadow: 0 0 0 2px rgba(189, 195, 199, 0.2);
-}
-
-/* Network Status Colors */
-.net-good { color: #27ae60; background: #e8f5e9; }
-.net-good .ping-dot { background-color: #27ae60; box-shadow: 0 0 0 2px rgba(39, 174, 96, 0.2); }
-
-.net-avg { color: #f39c12; background: #fef9e7; }
-.net-avg .ping-dot { background-color: #f39c12; box-shadow: 0 0 0 2px rgba(243, 156, 18, 0.2); }
-
-.net-bad { 
-    color: #e74c3c; 
-    background: #fdeaea; 
-    animation: flash-warning 1.5s infinite; /* Flashing Effect */
-}
-.net-bad .ping-dot { background-color: #e74c3c; box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.2); }
-
-@keyframes flash-warning {
-    0%, 100% { border: 1px solid transparent; }
-    50% { border: 1px solid #e74c3c; box-shadow: 0 0 10px rgba(231, 76, 60, 0.3); }
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
       .lock-container {
   background: #f8f9fa;
@@ -260,12 +248,22 @@
         <div class="main-container">
             
             <div class="header-controls">
-    <div class="info-group">
-        <div class="session-timer" id="sessionTimer">Session: Checking...</div>
+    
+    <div class="info-display">
         
-        <div class="network-badge" id="networkBadge">
-            <span class="ping-dot"></span>
-            <span id="networkText">Checking Net...</span>
+        <div class="info-item active" id="infoSession">
+            <i class="fa fa-clock-o timer-text"></i>
+            <span class="timer-text" id="sessionTimerText">CHECKING...</span>
+        </div>
+
+        <div class="info-item" id="infoNet">
+            <span class="ping-dot" id="pingDot"></span>
+            <span class="net-text" id="netText">Analyzing Net...</span>
+        </div>
+
+        <div class="info-item" id="infoSpeed">
+            <i class="fa fa-tachometer speed-text"></i>
+            <span class="speed-text" id="speedText">BW: Calculating...</span>
         </div>
     </div>
 
@@ -323,6 +321,8 @@ let lastMemoryCheck = 0;
 const MEMORY_CHECK_INTERVAL = 1000;
 let pageLoadTime = Date.now();
 const LOCK_STORAGE_KEY = 'csv_lock_state';
+let currentInfoIndex = 0;
+const infoItems = ['infoSession', 'infoNet', 'infoSpeed'];
 function getLockState() {
   const saved = localStorage.getItem(LOCK_STORAGE_KEY);
   return saved ? JSON.parse(saved) : {};
@@ -2002,7 +2002,87 @@ function updateNetworkUI(latency, status) {
     }
 }
 
-// Start the monitor when the app loads
+function startInfoCarousel() {
+    setInterval(() => {
+        // Hide Current
+        document.getElementById(infoItems[currentInfoIndex]).classList.remove('active');
+        
+        // Calculate Next
+        currentInfoIndex = (currentInfoIndex + 1) % infoItems.length;
+        
+        // Show Next
+        document.getElementById(infoItems[currentInfoIndex]).classList.add('active');
+    }, 3000); // 3 Seconds Gap
+}
+
+// Start immediately
+startInfoCarousel();
+
+// --- 2. ADVANCED NETWORK MONITOR ---
+function startNetworkMonitor() {
+    // Run initial check
+    checkNetworkHealth();
+    
+    // Update every 5 seconds
+    setInterval(checkNetworkHealth, 5000);
+}
+
+async function checkNetworkHealth() {
+    const start = Date.now();
+    let status = 'good';
+    let latency = 0;
+
+    try {
+        // Ping Check
+        await fetch('https://www.google.com/favicon.ico?' + start, { 
+            mode: 'no-cors', 
+            cache: 'no-store' 
+        });
+        latency = Date.now() - start;
+    } catch (e) {
+        status = 'offline';
+    }
+
+    updateHeaderStats(latency, status);
+}
+
+function updateHeaderStats(latency, status) {
+    const netEl = document.getElementById('infoNet');
+    const txtEl = document.getElementById('netText');
+    const spdEl = document.getElementById('speedText');
+    
+    // 1. Get Network Type & Bandwidth
+    const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    const type = conn ? (conn.effectiveType || '4G').toUpperCase() : 'NET';
+    const downLink = conn ? conn.downlink : 0; // Est. Mbps
+    
+    // 2. Format Speed Text (Metric 3)
+    // Note: 'downlink' is an estimate provided by the browser
+    if(status === 'offline'){
+         spdEl.innerHTML = "No Connection";
+    } else {
+         spdEl.innerHTML = `Down: ~${downLink} Mbps`;
+    }
+
+    // 3. Format Ping/Type Text (Metric 2)
+    netEl.classList.remove('status-good', 'status-avg', 'status-bad');
+    
+    if (status === 'offline') {
+        netEl.classList.add('status-bad');
+        txtEl.innerHTML = `OFFLINE`;
+    } else if (latency > 1500 || type.includes('2G')) {
+        netEl.classList.add('status-bad');
+        txtEl.innerHTML = `${type} • ${latency}ms (Weak)`;
+    } else if (latency > 500 || type.includes('3G')) {
+        netEl.classList.add('status-avg');
+        txtEl.innerHTML = `${type} • ${latency}ms`;
+    } else {
+        netEl.classList.add('status-good');
+        txtEl.innerHTML = `${type} • ${latency}ms`;
+    }
+}
+
+// Start Monitor
 startNetworkMonitor();
 window.onload = async function() {
     // 1. Check Session
