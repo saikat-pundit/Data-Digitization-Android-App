@@ -993,7 +993,9 @@ function createStatusDashboard(){
   selectOption.textContent = '-- Select ' + headers[1] + ' --';
   filterSelect.appendChild(selectOption);
   
-  const uniqueValues = [...new Set(limitedCSVData.map(row => row[1]))].filter(v => v).sort();
+  const uniqueValues = [...new Set(limitedCSVData.map(row => row[1]))]
+    .filter(v => v)
+    .sort((a, b) => parseInt(a) - parseInt(b));
   uniqueValues.forEach(value => {
     const option = document.createElement('option');
     option.value = value;
