@@ -1071,42 +1071,100 @@ function updateStatusTable(filterValue){
   const statusCounts = document.getElementById('statusCounts');
   if(!statusTable || !statusCounts) return;
   
-  let filteredRows = limitedCSVData;
+  // 1. Filter by Main Dropdown (AC No)
+  let primaryRows = limitedCSVData;
   if(filterValue) {
-    filteredRows = limitedCSVData.filter(row => row[1] === filterValue);
+    primaryRows = limitedCSVData.filter(row => row[1] === filterValue);
   }
+
+  // 2. Filter by Table Column Filters (20, 21, 22)
+  let filteredRows = primaryRows.filter(row => {
+      const f20 = currentStatusFilters[20];
+      const f21 = currentStatusFilters[21];
+      const f22 = currentStatusFilters[22];
+      
+      return (f20 === '' || row[20] === f20) &&
+             (f21 === '' || row[21] === f21) &&
+             (f22 === '' || row[22] === f22);
+  });
   
   updateStatusCountsOnly(filterValue);
   
+  // Helper to generate Dropdown Options based on current data
+  const getOptions = (colIndex) => {
+      const unique = [...new Set(primaryRows.map(r => r[colIndex]))].filter(v => v).sort();
+      return unique.map(val => 
+          `<option value="${val}" ${currentStatusFilters[colIndex] === val ? 'selected' : ''}>${val}</option>`
+      ).join('');
+  };
+
+  // 3. Build Table with Filter Headers
   let tableHTML = '<div class="status-table-container"><table class="status-table"><thead><tr>';
+  
+  // Name Column (No Filter)
   tableHTML += `<th>${headers[3]}</th>`;
-  tableHTML += `<th>${headers[20]}</th>`;
-  tableHTML += `<th>${headers[21]}</th>`;
-  tableHTML += `<th>${headers[22]}</th>`;
+  
+  // Column 20 Filter
+  tableHTML += `<th>
+      <div style="display:flex; align-items:center; justify-content:center; gap:5px;">
+        ${headers[20]} <i class="fa fa-filter" style="font-size:12px; opacity:0.7;"></i>
+      </div>
+      <select style="width:100%; margin-top:5px; font-size:12px; padding:2px;" onchange="applyStatusFilter(20, this.value, '${filterValue || ''}')">
+          <option value="">All</option>
+          ${getOptions(20)}
+      </select>
+  </th>`;
+
+  // Column 21 Filter
+  tableHTML += `<th>
+      <div style="display:flex; align-items:center; justify-content:center; gap:5px;">
+        ${headers[21]} <i class="fa fa-filter" style="font-size:12px; opacity:0.7;"></i>
+      </div>
+      <select style="width:100%; margin-top:5px; font-size:12px; padding:2px;" onchange="applyStatusFilter(21, this.value, '${filterValue || ''}')">
+          <option value="">All</option>
+          ${getOptions(21)}
+      </select>
+  </th>`;
+
+  // Column 22 Filter
+  tableHTML += `<th>
+      <div style="display:flex; align-items:center; justify-content:center; gap:5px;">
+        ${headers[22]} <i class="fa fa-filter" style="font-size:12px; opacity:0.7;"></i>
+      </div>
+      <select style="width:100%; margin-top:5px; font-size:12px; padding:2px;" onchange="applyStatusFilter(22, this.value, '${filterValue || ''}')">
+          <option value="">All</option>
+          ${getOptions(22)}
+      </select>
+  </th>`;
+  
   tableHTML += '</tr></thead><tbody>';
   
-  filteredRows.forEach(row => {
-  const serialNo = row[2] || '';
-  const name = row[3] || '';
-  const nameWithSerial = serialNo ? `${serialNo}. ${name}` : name;
-  const col20 = row[20] || '';
-  const col21 = row[21] || '';
-  const col22 = row[22] || '';
-  
-  let rowClass = '';
-  if (!col22.trim()) {
-    rowClass = 'row-missing-eci';
+  if (filteredRows.length === 0) {
+      tableHTML += '<tr><td colspan="4" style="text-align:center; padding:20px;">No matching records found</td></tr>';
+  } else {
+      filteredRows.forEach(row => {
+          const serialNo = row[2] || '';
+          const name = row[3] || '';
+          const nameWithSerial = serialNo ? `${serialNo}. ${name}` : name;
+          const col20 = row[20] || '';
+          const col21 = row[21] || '';
+          const col22 = row[22] || '';
+          
+          let rowClass = '';
+          if (!col22.trim()) {
+            rowClass = 'row-missing-eci';
+          }
+          if (col21.includes('REJECTED')) {
+            rowClass = 'row-rejected';
+          }
+          tableHTML += `<tr class="${rowClass}">`;
+          tableHTML += `<td>${nameWithSerial}</td>`;
+          tableHTML += `<td>${col20}</td>`;
+          tableHTML += `<td>${col21}</td>`;
+          tableHTML += `<td>${col22}</td>`;
+          tableHTML += '</tr>';
+      });
   }
-  if (col21.includes('REJECTED')) {
-    rowClass = 'row-rejected';
-  }
-  tableHTML += `<tr class="${rowClass}">`;
-  tableHTML += `<td>${nameWithSerial}</td>`;
-  tableHTML += `<td>${col20}</td>`;
-  tableHTML += `<td>${col21}</td>`;
-  tableHTML += `<td>${col22}</td>`;
-  tableHTML += '</tr>';
-});
   
   tableHTML += '</tbody></table></div>';
   statusTable.innerHTML = tableHTML;
